@@ -129,6 +129,7 @@ public class PdrSubengine extends Thread {
 					}
 				} else {
 					// Cube 's' was not blocked by image of predecessor
+					//Z.cexGeneralize(z,s);
 					z.setFrame(s.getFrame() - 1);
 					z.getCube().setNext(s.getCube());
 					Q.add(z);

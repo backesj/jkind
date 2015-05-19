@@ -281,6 +281,69 @@ public class PdrSmt extends ScriptUser {
 		return new Frame(I);
 	}
 
+	public void cexGeneralize(TCube pre, TCube post){
+    	Set<Term> removedLits = new HashSet<>();
+    	
+    	script.push(1);
+    	script.assertTerm(T(base, prime));
+    	for (Term term : post.getCube().getPLiterals()){
+        	script.assertTerm(prime(term));
+    	}
+    
+    	//sanity check 
+//    	script.push(1);
+//    	for (Term term : pre.getCube().getPLiterals()){
+//        	script.assertTerm(term);
+//    	}
+//    	switch (script.checkSat()) {
+//		case SAT:
+//			break;
+//		default:
+//			assert(false);
+//    	}
+//    	
+//    	script.pop(1);
+    	
+       	for (Term term1 : pre.getCube().getPLiterals()){
+    		script.push(1);
+    		script.assertTerm(not(term1));
+    		for (Term term2 : pre.getCube().getPLiterals()){
+    			if(!term1.equals(term2)){
+    				if(!removedLits.contains(term2)){
+    					script.assertTerm(term2);
+    				}
+    			}
+    		}
+    		
+    		switch (script.checkSat()) {
+    		case UNSAT:
+    			break;
+    		case SAT:
+    			removedLits.add(term1);
+    			break;
+
+    		default:
+    			commentUnknownReason();
+    			throw new StopException();
+    		}
+    		script.pop(1);
+    	}
+    	
+    	script.pop(1);
+    	Cube preCube = pre.getCube();
+    	int size = preCube.getPLiterals().size();
+    	for(Term term : removedLits){
+    		preCube.removePLiteral(term);
+    		if(isInitial(preCube)){
+    			preCube.addPLiteral(term);
+    		}
+    	}
+//    	int diff = size - pre.getCube().getPLiterals().size();
+//    	if (diff != 0){
+//    		System.out.println("removed "+diff+" literals");
+//    	}
+	}
+	
 	public void refine(List<Cube> cubes) {
 		List<Term> pieces = new ArrayList<>();
 
