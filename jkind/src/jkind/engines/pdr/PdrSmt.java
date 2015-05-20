@@ -2,6 +2,7 @@ package jkind.engines.pdr;
 
 import static java.util.stream.Collectors.toList;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,6 +23,7 @@ import jkind.solvers.smtinterpol.Subst;
 import jkind.solvers.smtinterpol.Term2Expr;
 import jkind.translation.Relation;
 import jkind.util.StreamIndex;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -47,7 +49,12 @@ public class PdrSmt extends ScriptUser {
 	private final Set<Term> predicates = new HashSet<>();
 
 	private final NameGenerator abstractAssertions = new NameGenerator("abstract");
-
+	
+	//used for performing solver resets
+	private final Set<AnnotatedTerm> savedAbstractTerms = new HashSet<>();
+    //number of learned clauses before solver reset
+	private final int MAX_NUM_LEARNED_CLAUSES = 200;
+	
 	public PdrSmt(Node node, List<Frame> F, String property, String scratchBase) {
 		super(SmtInterpolUtil.getScript(scratchBase));
 		this.F = F;
@@ -57,6 +64,7 @@ public class PdrSmt extends ScriptUser {
 		script.setOption(":simplify-interpolants", true);
 		script.setLogic(Logics.QF_UFLIRA);
 		script.setOption(":verbosity", 2);
+		//script.setOption(":random-seed", BigInteger.valueOf(5678678));
 
 		Lustre2Term lustre2Term = new Lustre2Term(script, node);
 		this.varDecls = lustre2Term.getVariables();
@@ -69,15 +77,18 @@ public class PdrSmt extends ScriptUser {
 		this.I = lustre2Term.getInit();
 		defineTransitionRelation(lustre2Term.getTransition());
 		this.P = lustre2Term.encodeProperty(property);
-
+		
+		script.push(1);
 		assertAbstract(T(baseAbstract, primeAbstract));
-
+		
 		addPredicates(PredicateCollector.collect(I));
 		addPredicates(PredicateCollector.collect(P));
 	}
 
 	private void assertAbstract(Term t) {
-		script.assertTerm(name(t, abstractAssertions.getNextName()));
+		Term term = name(t, abstractAssertions.getNextName());
+		savedAbstractTerms.add((AnnotatedTerm) term);
+		script.assertTerm(term);
 	}
 
 	private void defineTransitionRelation(Term transition) {
@@ -136,6 +147,19 @@ public class PdrSmt extends ScriptUser {
 	}
 
 	private Model checkSat(Term assertion) {
+		
+		Object[] info = (Object[]) script.getInfo(":all-statistics");
+		Integer clauses = (Integer) ((Object[]) ((Object[]) ((Object[]) info[0]) [1]) [7]) [1];
+		
+		if(clauses > MAX_NUM_LEARNED_CLAUSES){
+			script.pop(1);
+			script.push(1);
+			for(AnnotatedTerm annoterm: savedAbstractTerms){
+				script.annotate(annoterm.getSubterm(), annoterm.getAnnotations());
+				script.assertTerm(annoterm);
+			}
+		}
+		
 		script.push(1);
 		script.assertTerm(assertion);
 		switch (script.checkSat()) {
@@ -187,7 +211,7 @@ public class PdrSmt extends ScriptUser {
 	public TCube solveRelative(TCube s, Option option) {
 		int frame = s.getFrame();
 		Cube cube = s.getCube();
-
+		
 		script.push(1);
 
 		if (option != Option.NO_IND) {
@@ -280,69 +304,6 @@ public class PdrSmt extends ScriptUser {
 	public Frame createInitialFrame() {
 		return new Frame(I);
 	}
-
-	public void cexGeneralize(TCube pre, TCube post){
-    	Set<Term> removedLits = new HashSet<>();
-    	
-    	script.push(1);
-    	script.assertTerm(T(base, prime));
-    	for (Term term : post.getCube().getPLiterals()){
-        	script.assertTerm(prime(term));
-    	}
-    
-    	//sanity check 
-//    	script.push(1);
-//    	for (Term term : pre.getCube().getPLiterals()){
-//        	script.assertTerm(term);
-//    	}
-//    	switch (script.checkSat()) {
-//		case SAT:
-//			break;
-//		default:
-//			assert(false);
-//    	}
-//    	
-//    	script.pop(1);
-    	
-       	for (Term term1 : pre.getCube().getPLiterals()){
-    		script.push(1);
-    		script.assertTerm(not(term1));
-    		for (Term term2 : pre.getCube().getPLiterals()){
-    			if(!term1.equals(term2)){
-    				if(!removedLits.contains(term2)){
-    					script.assertTerm(term2);
-    				}
-    			}
-    		}
-    		
-    		switch (script.checkSat()) {
-    		case UNSAT:
-    			break;
-    		case SAT:
-    			removedLits.add(term1);
-    			break;
-
-    		default:
-    			commentUnknownReason();
-    			throw new StopException();
-    		}
-    		script.pop(1);
-    	}
-    	
-    	script.pop(1);
-    	Cube preCube = pre.getCube();
-    	int size = preCube.getPLiterals().size();
-    	for(Term term : removedLits){
-    		preCube.removePLiteral(term);
-    		if(isInitial(preCube)){
-    			preCube.addPLiteral(term);
-    		}
-    	}
-//    	int diff = size - pre.getCube().getPLiterals().size();
-//    	if (diff != 0){
-//    		System.out.println("removed "+diff+" literals");
-//    	}
-	}
 	
 	public void refine(List<Cube> cubes) {
 		List<Term> pieces = new ArrayList<>();
@@ -413,6 +374,9 @@ public class PdrSmt extends ScriptUser {
 		List<Term> disjuncts = new ArrayList<>();
 
 		for (Term literal : cube.getPLiterals()) {
+			if (literal == I){
+				System.out.println(I);
+			}
 			if (literal != not(I)) {
 				disjuncts.add(not(literal));
 			}

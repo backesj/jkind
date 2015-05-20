@@ -71,6 +71,7 @@ public class PdrSubengine extends Thread {
 					blockCube(new TCube(c, depth()));
 				} else {
 					addFrame(new Frame());
+					//System.out.println("Number of frames: " + F.size());
 					Z.comment("Number of frames: " + F.size());
 					List<Expr> invariants = propogateBlockedCubes();
 					if (invariants != null) {
@@ -128,8 +129,6 @@ public class PdrSubengine extends Thread {
 						Q.add(s.next());
 					}
 				} else {
-					// Cube 's' was not blocked by image of predecessor
-					//Z.cexGeneralize(z,s);
 					z.setFrame(s.getFrame() - 1);
 					z.getCube().setNext(s.getCube());
 					Q.add(z);
