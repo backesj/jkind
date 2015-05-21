@@ -148,17 +148,17 @@ public class PdrSmt extends ScriptUser {
 
 	private Model checkSat(Term assertion) {
 		
-		Object[] info = (Object[]) script.getInfo(":all-statistics");
-		Integer clauses = (Integer) ((Object[]) ((Object[]) ((Object[]) info[0]) [1]) [7]) [1];
-		
-		if(clauses > MAX_NUM_LEARNED_CLAUSES){
-			script.pop(1);
-			script.push(1);
-			for(AnnotatedTerm annoterm: savedAbstractTerms){
-				script.annotate(annoterm.getSubterm(), annoterm.getAnnotations());
-				script.assertTerm(annoterm);
-			}
-		}
+//		Object[] info = (Object[]) script.getInfo(":all-statistics");
+//		Integer clauses = (Integer) ((Object[]) ((Object[]) ((Object[]) info[0]) [1]) [7]) [1];
+//		
+//		if(clauses > MAX_NUM_LEARNED_CLAUSES){
+//			script.pop(1);
+//			script.push(1);
+//			for(AnnotatedTerm annoterm: savedAbstractTerms){
+//				script.annotate(annoterm.getSubterm(), annoterm.getAnnotations());
+//				script.assertTerm(annoterm);
+//			}
+//		}
 		
 		script.push(1);
 		script.assertTerm(assertion);
