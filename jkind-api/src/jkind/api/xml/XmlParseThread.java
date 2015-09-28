@@ -68,7 +68,7 @@ public class XmlParseThread extends Thread {
 			StringBuilder buffer = null;
 			String line;
 			while ((line = lines.readLine()) != null) {
-				//System.out.println(line);
+				System.out.print(line);
 				boolean beginProperty = line.contains("<Property ");
 				boolean endProperty = line.contains("</Property>");
 				boolean beginProgress = line.contains("<Progress ");

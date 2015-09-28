@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: jkind-api
+Bundle-SymbolicName: jkind-api
+Bundle-Version: 1.0.0.qualifier
+Export-Package: icons,
+ jkind.api,
+ jkind.api.examples,
+ jkind.api.results,
+ jkind.api.ui.counterexample,
+ jkind.api.ui.results,
+ jkind.api.workarounds,
+ jkind.api.xml
+Require-Bundle: jkind-common;bundle-version="1.0.0"
