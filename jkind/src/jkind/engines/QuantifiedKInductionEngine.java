@@ -109,6 +109,22 @@ public class QuantifiedKInductionEngine extends KInductionEngine {
 		assertNewInvariants(newInvariants, k);
 	}
 	
+	@Override
+	protected void assertNewInvariants(List<Expr> invariants, int limit) {
+		for (int i = 0; i <= limit; i++) {
+			assertInvariants(invariants, i);
+		}
+	}
+
+	@Override
+	protected void assertInvariants(List<Expr> invariants, int i) {
+		Cvc4MultiSolver cvc4Solver = (Cvc4MultiSolver)solver;
+		Lustre2Sexp translater = new Lustre2SexpMaybeArrow(i);
+		for (Expr expr : invariants) {
+			cvc4Solver.assertUnsatOnly(expr.accept(translater));
+		}
+	}
+	
 	protected Sexp getInductiveQuery(int k, String possiblyValid){
 		return getInductiveQuery(k, Collections.singletonList(possiblyValid));
 	}

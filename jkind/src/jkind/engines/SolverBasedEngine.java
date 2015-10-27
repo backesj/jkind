@@ -145,7 +145,7 @@ public abstract class SolverBasedEngine extends Engine {
 		return new Cons(spec.transitionRelation.getName(), args);
 	}
 
-	private List<Sexp> getSymbols(List<VarDecl> varDecls) {
+	protected List<Sexp> getSymbols(List<VarDecl> varDecls) {
 		List<Sexp> result = new ArrayList<>();
 		for (VarDecl vd : varDecls) {
 			result.add(new Symbol(vd.id));

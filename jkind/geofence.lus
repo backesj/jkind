@@ -1,0 +1,157 @@
+type Coord = induct {point (x int) (y int)};
+type CoordLst = induct {cons (head Coord) (tail CoordLst) | nil };
+type Fence = induct {corners (top int) (bottom int) (left int) (right int)};
+
+recursive coordInFence(
+  fence : Fence;
+  coord : Coord)
+returns(
+  ret: bool);
+let
+  ret = if (x coord) <= (right fence) and 
+           (x coord) >= (left fence) and
+           (y coord) <= (top fence) and
+           (y coord) >= (bottom fence) then
+             true
+        else
+             false;
+tel;
+
+recursive planInFence(
+  fence : Fence;
+  coords : CoordLst)
+returns(
+  ret: bool);
+let
+  ret = if (is_nil coords) then
+          true
+        else
+          (coordInFence fence (head coords)) and
+          (planInFence fence (tail coords));
+tel;
+
+node abs (x : int) returns (ret : int);
+let
+  ret = if x < 0 then
+          -1 * x
+        else
+          x;
+tel;
+
+node main(
+  dest : Coord; 
+  fence : Fence;
+  plan : CoordLst;
+  location: Coord;
+  gotDest : bool;
+  gotFence : bool;
+  newPlan : bool)
+returns ();
+var
+  prop0 : bool;
+  prop1 : bool;
+  prop2 : bool;
+  curFence : Fence;
+  locInFence : bool;
+  curDest : Coord;
+  nextPoint : Coord;
+  controllerPlan : CoordLst;
+  curXDist : int;
+  preXDist : int;
+  curYDist : int;
+  preYDist : int;
+  nextPointInFence : bool;
+let
+  --BEGIN MISSION PLANNER VARIABLES
+  curFence = if (gotFence) then fence else (corners 0 0 0 0) -> pre(curFence);
+  curDest = if (gotDest) then dest else (point 0 0) -> pre(curDest);
+  
+  --BEGIN CONTROLLER VARIABLES
+  controllerPlan = nil ->
+                   (if pre(newPlan) then
+                     pre(plan)
+                   else if (is_cons (pre controllerPlan)) and
+                           pre(location) = (head (pre controllerPlan)) then
+                     (tail (pre controllerPlan))
+                   else
+                     pre(controllerPlan));
+          
+  
+  nextPoint = (point 0 0) ->
+              if (is_nil controllerPlan) then
+                pre(location)
+              else
+                (head controllerPlan);
+
+  locInFence = (coordInFence curFence location);
+  nextPointInFence = (coordInFence curFence nextPoint);
+  
+  
+  --BEGIN MISSION PLANNER GUARANTEES
+  
+  --The mission planner guarantees that it always provides a plan
+  --that falls within the current geofence
+  assert (planInFence curFence plan);
+  
+  --The plan only changes if the destination changes or the fence
+  --changes
+  
+  assert (newPlan => (gotDest or gotFence));
+  assert true -> (plan <> pre(plan)) => newPlan;
+  
+  --if we got a new fence and we are not currently in it. We
+  --need a new plan
+  assert gotFence => not locInFence => plan <> nil and newPlan;
+  
+  
+  --We never send a blank plan
+  
+  assert (newPlan => not (is_nil plan));
+  
+  --BEGIN CONTROLLER GURANTEES
+  
+  --the controller is always initially at point 0,0
+  assert( (location = (point 0 0)) -> true);
+  
+  --The controller guarantees that it always stays within the same distance
+  --or moves towards its next coordinate
+  
+  curXDist = 0 -> (x location) - (x pre(nextPoint));
+  preXDist = 0 -> (x pre(location)) - (x pre(nextPoint));
+  
+  curYDist = 0 -> (y location) - (y pre(nextPoint));
+  preYDist = 0 -> (y pre(location)) - (y pre(nextPoint));
+  
+  assert preXDist <= 0 => curXDist <= 0 and curXDist >= preXDist;
+  assert preYDist <= 0 => curYDist <= 0 and curYDist >= preYDist;
+  
+  assert preXDist >= 0 => curXDist >= 0 and curXDist <= preXDist;
+  assert preYDist >= 0 => curYDist >= 0 and curYDist <= preYDist;
+  
+  
+  --BEGIN SYSTEM ASSUMPTIONS
+  
+  --We assume that if we get a new geofence then the current
+  --destination lies within this fence
+  
+  assert(gotFence => (coordInFence fence curDest));
+  
+  --BEGIN PROPERTIES
+  
+  --if we are not in the fence then:
+  --1. The fence is new.
+  --2. We were previously not in the fence.
+              
+              
+  prop2 = not (planInFence curFence controllerPlan) => gotFence;
+  --prop2 = true -> (pre(plan) = nil => location = pre(location));
+  prop1 = true -> pre(gotFence) => nextPointInFence or gotFence;
+  prop0 = true -> pre(locInFence) => locInFence or gotFence or nextPointInFence;
+  
+  ----%PROPERTY prop0;
+  ----%PROPERTY prop1;
+  --%PROPERTY prop2;
+  
+tel;
+  
+

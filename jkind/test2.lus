@@ -1,0 +1,81 @@
+type Lst = induct {cons (head int) (tail Lst) | nil };
+
+recursive filter(lst : Lst; high : int; low : int) returns (ret : Lst);
+let
+  ret = if (is_nil lst) then
+          nil
+        else
+          if (head lst) >= high or (head lst) <= low then
+            (filter (tail lst) high low)
+          else
+            (cons (head lst) (filter (tail lst) high low));
+tel;
+
+recursive contains(x : int; lst : Lst) returns (ret : bool);
+let
+  ret = if (is_nil lst) then
+          false
+        else if (head lst) = x then
+          true
+        else
+          (contains x (tail lst));
+tel;
+
+recursive increase(x : int; lst : Lst) returns (ret : Lst);
+let
+  ret = if (is_nil lst) then
+          nil
+        else
+          (cons ((head lst) + x) (increase x (tail lst)));
+tel;
+
+recursive some_neg(lst : Lst) returns (ret : bool);
+let
+  ret = if (is_nil lst) then
+          false
+        else if (head lst) < 0 then
+          true
+        else 
+          (some_neg (tail lst));
+tel;
+
+recursive sum(lst : Lst) returns (ret : int);
+let
+  ret = if (is_nil lst) then
+          0
+        else
+          (head lst) + (sum (tail lst));
+tel;
+
+node main(input : int; input2 : int) returns ();
+var
+  prop0 : bool;
+  prop1 : bool;
+  prop2 : bool;
+  prop3 : bool;
+  list : Lst;
+  prop4 : bool;
+let
+  list = if (input >= 10) or (input <= -5) then nil -> pre(list) else (cons input nil) -> (cons input pre(list));
+  
+  prop4 = forall (x : int) .
+     (x >= 10) or (x <= -10) => not (contains x list);
+  
+  prop0 = forall (x : int; lst : Lst; high : int; low : int) . 
+    (x >= high) or (x <= low) => not (contains x (filter lst high low));
+    
+  prop1 = forall(x : int; y : int; lst : Lst; high : int; low : int) .
+    (x >= high + y) or (x <= low + y) => not (contains x (increase y (filter lst high low)));
+    
+  prop2 = forall(x : int; high : int; low : int; lst : Lst) .
+    (x >= high) or (x <= low) => not (contains x (filter (cons x lst) high low));
+    
+  prop3 = forall(l : Lst) .
+    (sum l) < 0 => (some_neg l);
+        
+  --%PROPERTY prop4;
+  --%PROPERTY prop0;
+  --%PROPERTY prop1;
+  --%PROPERTY prop2;
+  --%PROPERTY prop3;
+tel;

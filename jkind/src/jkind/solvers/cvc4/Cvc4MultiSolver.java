@@ -25,7 +25,8 @@ public class Cvc4MultiSolver extends Solver {
     private Cvc4SolverThread unsatSolver = null;
     private final String scratchBase;
     private final BlockingQueue<MultiSolverResult> incoming = new LinkedBlockingQueue<>();
-    private final LinkedList<List<Sexp>> assertionsQueue = new LinkedList<>();
+    private final LinkedList<List<Sexp>> unsatAssertionsQueue = new LinkedList<>();
+    private final LinkedList<List<Sexp>> satAssertionsQueue = new LinkedList<>();
     private List<VarDecl> definedVars = new ArrayList<>();
     private List<Relation> definedRelations = new ArrayList<>();
     private List<InductType> definedInductTypes = new ArrayList<>();
@@ -34,7 +35,8 @@ public class Cvc4MultiSolver extends Solver {
 
     public Cvc4MultiSolver(String scratchBase) {
         this.scratchBase = scratchBase;
-        assertionsQueue.add(new ArrayList<>()); //TODO maybe don't do this initially
+        unsatAssertionsQueue.add(new ArrayList<>()); //TODO maybe don't do this initially
+        satAssertionsQueue.add(new ArrayList<>()); //TODO maybe don't do this initially
         buildSatSolver();
         buildUnsatSolver();
     }
@@ -47,7 +49,7 @@ public class Cvc4MultiSolver extends Solver {
         ProcessBuilder satProcess = new ProcessBuilder(getCVC4(), "--lang", "smt", "--fmf-fun");
 
         satSolver = new Cvc4SolverThread(scratchBase+"_SAT", satProcess, incoming);
-        rebuildSolver(satSolver);
+        rebuildSolver(satSolver, satAssertionsQueue);
     }
 
     private void buildUnsatSolver() {
@@ -57,10 +59,10 @@ public class Cvc4MultiSolver extends Solver {
         ProcessBuilder unsatProcess = new ProcessBuilder(getCVC4(), "--lang", "smt", "--quant-ind");
         		//,"--conjecture-gen", "--conjecture-filter-canonical", "--conjecture-gen-per-round=100");
         unsatSolver = new Cvc4SolverThread(scratchBase+"_UNSAT", unsatProcess, incoming);
-        rebuildSolver(unsatSolver);
+        rebuildSolver(unsatSolver, unsatAssertionsQueue);
     }
 
-    private void rebuildSolver(Cvc4SolverThread solver) {
+    private void rebuildSolver(Cvc4SolverThread solver, LinkedList<List<Sexp>> assertionsQueue) {
         if (initialSpec != null) {
             solver.initialize(initialSpec);
         }
@@ -89,6 +91,7 @@ public class Cvc4MultiSolver extends Solver {
         
     }
 
+
     private static String getCVC4() {
         String home = System.getenv("CVC4_HOME");
         if (home != null) {
@@ -110,9 +113,15 @@ public class Cvc4MultiSolver extends Solver {
 
     @Override
     public void assertSexp(Sexp sexp) {
-        assertionsQueue.peek().add(sexp);
+        unsatAssertionsQueue.peek().add(sexp);
+        satAssertionsQueue.peek().add(sexp);
         satSolver.assertSexp(sexp);
         unsatSolver.assertSexp(sexp);
+    }
+    
+    public void assertUnsatOnly(Sexp sexp){
+    	  unsatAssertionsQueue.peek().add(sexp);
+          unsatSolver.assertSexp(sexp);
     }
 
     @Override
@@ -210,14 +219,16 @@ public class Cvc4MultiSolver extends Solver {
 
     @Override
     public void push() {
-        assertionsQueue.push((new ArrayList<>()));
+        unsatAssertionsQueue.push((new ArrayList<>()));
+        satAssertionsQueue.push((new ArrayList<>()));
         satSolver.push();
         unsatSolver.push();
     }
 
     @Override
     public void pop() {
-        assertionsQueue.pop();
+        unsatAssertionsQueue.pop();
+        satAssertionsQueue.pop();
         satSolver.pop();
         unsatSolver.pop();
     }
