@@ -67,13 +67,16 @@ public class XmlParseThread extends Thread {
 		try (LineInputStream lines = new LineInputStream(xmlStream)) {
 			StringBuilder buffer = null;
 			String line;
+			String analysis = null;
 			while ((line = lines.readLine()) != null) {
-				//System.out.println(line);
+				System.out.println(line);
 				boolean beginProperty = line.contains("<Property ");
 				boolean endProperty = line.contains("</Property>");
 				boolean beginProgress = line.contains("<Progress ");
 				boolean endProgress = line.contains("</Progress>");
-
+				boolean beginAnalysis = line.contains("<AnalysisStart");
+				boolean endAnalysis = line.contains("<AnalysisStop");
+				
 				if (beginProgress && endProgress) {
 					// Kind 2 progress format uses a single line
 					parseKind2ProgressXml(line);
@@ -82,12 +85,16 @@ public class XmlParseThread extends Thread {
 					buffer.append(line);
 				} else if (endProperty) {
 					buffer.append(line);
-					parsePropetyXml(buffer.toString());
+					parsePropetyXml(buffer.toString(), analysis);
 					buffer = null;
 				} else if (endProgress) {
 					buffer.append(line);
 					parseJKindProgressXml(buffer.toString());
 					buffer = null;
+				}else if (beginAnalysis){
+				    analysis = parseKind2AnalysisXml(line);
+				}else if (endAnalysis){
+				    analysis = null;
 				} else if (buffer != null) {
 					buffer.append(line);
 				}
@@ -97,10 +104,17 @@ public class XmlParseThread extends Thread {
 		}
 	}
 
-	private Element parseXml(String xml) {
+	private String parseKind2AnalysisXml(String line) {
+	    Element progressElement = parseXml(line);
+        return progressElement.getAttribute("top");
+    }
+
+    private Element parseXml(String xml) {
 		try {
 			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.parse(new InputSource(new StringReader(xml)));
+			StringReader stringReader = new StringReader(xml);
+            InputSource inputSource = new InputSource(stringReader);
+            Document doc = builder.parse(inputSource);
 			return doc.getDocumentElement();
 		} catch (Exception e) {
 			throw new JKindException("Error parsing: " + xml, e);
@@ -131,11 +145,16 @@ public class XmlParseThread extends Thread {
 		}
 	}
 
-	public void parsePropetyXml(String propertyXml) {
+	public void parsePropetyXml(String propertyXml, String analysis) {
 		Property prop = getProperty(parseXml(propertyXml));
-		PropertyResult pr = result.getPropertyResult(prop.getName());
+		String propName = prop.getName();
+		PropertyResult pr = result.getPropertyResult(propName);
+		if(pr == null && analysis != null){
+            propName = analysis + propName;
+            pr = result.getPropertyResult(propName);
+        }
 		if (pr == null) {
-			pr = result.addProperty(prop.getName());
+			pr = result.addProperty(propName);
 			if (pr == null) {
 				return;
 			}
