@@ -12,12 +12,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import jkind.JKindException;
 import jkind.interval.Interval;
 import jkind.lustre.EnumType;
+import jkind.lustre.Equation;
+import jkind.lustre.IdExpr;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
 import jkind.lustre.SubrangeIntType;
@@ -135,6 +138,17 @@ public class Util {
 		return unresolved;
 	}
 
+	public static Map<String, Set<String>> getDirectDependencies(Node node) {
+		Map<String, Set<String>> directDepends = new HashMap<>();
+		for (Equation eq : node.equations) {
+			Set<String> set = CurrIdExtractorVisitor.getCurrIds(eq.expr);
+			for (IdExpr idExpr : eq.lhs) {
+				directDepends.put(idExpr.id, set);
+			}
+		}
+		return directDepends;
+	}
+
 	public static void writeToFile(String content, File file) throws IOException {
 		try (Writer writer = new BufferedWriter(new FileWriter(file))) {
 			writer.append(content);
@@ -202,6 +216,10 @@ public class Util {
 			}
 		}
 		return enums;
+	}
+
+	public static Value getDefaultValue(Type type) {
+		return type.accept(new DefaultValueVisitor());
 	}
 
 	public static Value cast(Type type, Value value) {

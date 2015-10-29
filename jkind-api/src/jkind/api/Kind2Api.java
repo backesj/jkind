@@ -52,6 +52,7 @@ public class Kind2Api extends KindApi {
 	 */
 	@Override
 	public void execute(File lustreFile, JKindResult result, IProgressMonitor monitor) {
+		debug.println("Lustre file", lustreFile);
 		try {
 			callKind2(lustreFile, result, monitor);
 		} catch (JKindException e) {
@@ -134,7 +135,15 @@ public class Kind2Api extends KindApi {
 	}
 
 	@Override
-	public void checkAvailable() throws Exception {
-		new ProcessBuilder("kind2").start().waitFor();
+	public String checkAvailable() throws Exception {
+		ProcessBuilder builder = new ProcessBuilder("kind2", "--version");
+		builder.redirectErrorStream(true);
+		Process process = builder.start();
+
+		String output = ApiUtil.readAll(process.getInputStream());
+		if (process.exitValue() != 0) {
+			throw new JKindException("Error running kind2: " + output);
+		}
+		return output;
 	}
 }
