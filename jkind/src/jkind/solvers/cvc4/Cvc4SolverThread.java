@@ -45,6 +45,13 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
         storedQuery = sexp;
     }
     
+    @Override
+    protected void send(String str) {
+    	if(!destroyed.get()){
+    		super.send(str);
+    	}
+	}
+    
     private void cancelableQuery(){
         Result result = null;
         push();

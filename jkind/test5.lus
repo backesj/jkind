@@ -30,7 +30,7 @@ let
 tel;
           
 
-node main(n : Nat; o : Nat) returns();
+node main(n : Nat) returns();
 var
   l : Lst;
   odd_in_past : bool;
@@ -50,10 +50,10 @@ let
   prop3 = forall (m : Nat) . (in m l) => (odd m) => odd_in_past;
   prop4 = forall (m : Nat) . (in m l) => (not (even m)) => odd_in_past;
 
-  --%PROPERTY prop0;
-  --%PROPERTY prop1;
-  --%PROPERTY prop2;
+  ----%PROPERTY prop0;
+  ----%PROPERTY prop1;
+  ----%PROPERTY prop2;
   --%PROPERTY prop3;
-  --%PROPERTY prop4;
+  ----%PROPERTY prop4;
   
 tel;
