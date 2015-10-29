@@ -191,7 +191,7 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 		newline();
 
 		if (node.id.equals(main)) {
-			write("  --%MAIN");
+			write("  --%MAIN;");
 			newline();
 		}
 
@@ -523,8 +523,9 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 
 	@Override
 	public Void visit(Contract contract) {
-		write("--@contract : "+contract.name+";");
-		newline();
+	    //write("--@contracts "+contract.name+";");
+		//write("--@mode "+contract.name+";");
+		//newline();
 		for(Expr expr : contract.requires){
 			write("--@require ");
 			expr(expr);
