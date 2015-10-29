@@ -466,7 +466,7 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 
 	@Override
 	public Void visit(Contract contract) {
-		write("--@contract : "+contract.name+";");
+		//write("--@contract : "+contract.name+";");
 		newline();
 		for(Expr expr : contract.requires){
 			write("--@require ");
