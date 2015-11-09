@@ -4,7 +4,9 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -41,6 +43,7 @@ public class XmlParseThread extends Thread {
 	private final Backend backend;
 	private final DocumentBuilderFactory factory;
 	private volatile Throwable throwable;
+	private Map<String, List<PropertyResult>> analysisToProps;
 
 	public XmlParseThread(InputStream xmlStream, JKindResult result, Backend backend) {
 		super("Xml Parse");
@@ -68,6 +71,7 @@ public class XmlParseThread extends Thread {
 			StringBuilder buffer = null;
 			String line;
 			String analysis = null;
+			analysisToProps = new HashMap<>();
 			while ((line = lines.readLine()) != null) {
 				System.out.println(line);
 				boolean beginProperty = line.contains("<Property ");
@@ -79,7 +83,7 @@ public class XmlParseThread extends Thread {
 				
 				if (beginProgress && endProgress) {
 					// Kind 2 progress format uses a single line
-					parseKind2ProgressXml(line);
+					parseKind2ProgressXml(line, analysis);
 				} else if (beginProgress || beginProperty) {
 					buffer = new StringBuilder();
 					buffer.append(line);
@@ -106,7 +110,11 @@ public class XmlParseThread extends Thread {
 
 	private String parseKind2AnalysisXml(String line) {
 	    Element progressElement = parseXml(line);
-        return progressElement.getAttribute("top");
+	    String analysis = progressElement.getAttribute("top");
+	    if(!analysisToProps.containsKey(analysis)){
+	        analysisToProps.put(analysis, new ArrayList<>());
+	    }
+        return analysis;
     }
 
     private Element parseXml(String xml) {
@@ -121,12 +129,14 @@ public class XmlParseThread extends Thread {
 		}
 	}
 
-	private void parseKind2ProgressXml(String progressXml) {
+	private void parseKind2ProgressXml(String progressXml, String analysis) {
 		Element progressElement = parseXml(progressXml);
 		String source = progressElement.getAttribute("source");
 		if ("bmc".equals(source)) {
 			int k = Integer.parseInt(progressElement.getTextContent());
-			result.setBaseProgress(k);
+			for(PropertyResult pr : analysisToProps.get(analysis)){
+			        pr.setBaseProgress(k);
+			}
 		}
 	}
 
@@ -148,19 +158,26 @@ public class XmlParseThread extends Thread {
 	public void parsePropetyXml(String propertyXml, String analysis) {
 		Property prop = getProperty(parseXml(propertyXml));
 		String propName = prop.getName();
-		PropertyResult pr = result.getPropertyResult(propName);
+		PropertyResult pr = getOrAddProperty(analysis, propName);
+        if (pr != null) {
+            pr.setProperty(prop);
+            if(analysis != null){
+                analysisToProps.get(analysis).add(pr);
+            }
+        }
+	}
+
+    private PropertyResult getOrAddProperty(String analysis, String propName) {
+        PropertyResult pr = result.getPropertyResult(propName);
 		if(pr == null && analysis != null){
             propName = analysis + propName;
             pr = result.getPropertyResult(propName);
         }
 		if (pr == null) {
 			pr = result.addProperty(propName);
-			if (pr == null) {
-				return;
-			}
 		}
-		pr.setProperty(prop);
-	}
+        return pr;
+    }
 
 	private Property getProperty(Element propertyElement) {
 		String name = propertyElement.getAttribute("name");
