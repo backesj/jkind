@@ -10,7 +10,9 @@ import jkind.JKindSettings;
 import jkind.engines.messages.InvalidMessage;
 import jkind.engines.messages.ValidMessage;
 import jkind.lustre.Expr;
+import jkind.lustre.IdExpr;
 import jkind.lustre.LustreUtil;
+import jkind.lustre.QuantExpr;
 import jkind.lustre.VarDecl;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
@@ -110,10 +112,14 @@ public class QuantifiedBmcEngine extends BmcEngine{
 	
 	private List<Sexp> toSexps(List<String> props, int k){
 		List<Sexp> sexps = new ArrayList<>();
-		Lustre2Sexp translater = new Lustre2SexpNoArrow(k);
+		Lustre2Sexp specialTranslater = new Lustre2SexpNoArrow(k);
 		for(String prop : props){
 			Expr expr = exprMap.get(prop);
-			sexps.add(expr.accept(translater));
+			if(expr != null){
+				sexps.add(expr.accept(specialTranslater));
+			}else{
+				sexps.add((new IdExpr(prop).accept(specialTranslater)));
+			}
 		}
 		return sexps;
 	}
@@ -150,7 +156,9 @@ public class QuantifiedBmcEngine extends BmcEngine{
 	protected void addPropertiesAsInvariants(int k, List<String> valid) {
 		List<Expr> newInvariants = new ArrayList<>();
 		for(String str : valid){
-			newInvariants.add(exprMap.get(str));
+			Expr expr = exprMap.get(str);
+			expr = expr == null ? new IdExpr(str) : expr;
+			newInvariants.add(expr);
 		}
 		assertNewInvariants(newInvariants, k);
 	}

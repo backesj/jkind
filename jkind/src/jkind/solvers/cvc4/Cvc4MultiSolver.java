@@ -159,15 +159,17 @@ public class Cvc4MultiSolver extends Solver {
         MultiSolverResult multiResult = incoming.poll();
         //TODO sometimes they both return so we don't need to restart the other
         //we might want to change how this works to improve the performance later
-        if(multiResult.solver == satSolver){
-            restartSolver(unsatSolver);
-        }else{
-            if(multiResult.solver != unsatSolver){
-                throw new JKindException("What solver is this suposed to be?");
-            }
-            restartSolver(satSolver);
-        }
+//        if(multiResult.solver == satSolver){
+//            restartSolver(unsatSolver);
+//        }else{
+//            if(multiResult.solver != unsatSolver){
+//                throw new JKindException("What solver is this suposed to be?");
+//            }
+//            restartSolver(satSolver);
+//        }
         
+        restartSolver(unsatSolver);
+        restartSolver(satSolver);
         incoming.clear(); //sometimes we get multiple results that we need to clear
         return multiResult.result;
     }
@@ -229,8 +231,11 @@ public class Cvc4MultiSolver extends Solver {
     public void pop() {
         unsatAssertionsQueue.pop();
         satAssertionsQueue.pop();
-        satSolver.pop();
-        unsatSolver.pop();
+        
+        restartSolver(satSolver);
+        restartSolver(unsatSolver);
+        //satSolver.pop();
+        //unsatSolver.pop();
     }
 
     @Override

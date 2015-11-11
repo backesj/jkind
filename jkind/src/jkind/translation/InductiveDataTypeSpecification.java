@@ -43,22 +43,22 @@ public class InductiveDataTypeSpecification extends Specification{
     	//CVC4 does not do well with quantifiers in the transition relation
     	//we replace quantified properties with themselves in the node and then
     	//handle them differently in the QuantifedBMC and QuantifiedKInduction Engines
-    	List<Equation> newEqs = new ArrayList<>();
-    	for(Equation eq : node.equations){
-    		String lhs = eq.lhs.get(0).id;
-    		if(node.properties.contains(lhs)){
-    			newEqs.add(new Equation(new IdExpr(lhs), new IdExpr(lhs)));
-    		}else{
-    			newEqs.add(eq);
-    		}
-    	}
-    	return new Node(node.location, node.id, node.inputs, node.outputs, node.locals, 
+		List<Equation> newEqs = new ArrayList<>();
+		for (Equation eq : node.equations) {
+			String lhs = eq.lhs.get(0).id;
+			if (node.properties.contains(lhs) && eq.expr instanceof QuantExpr) {
+				newEqs.add(new Equation(new IdExpr(lhs), new IdExpr(lhs)));
+			} else {
+				newEqs.add(eq);
+			}
+		}
+		return new Node(node.location, node.id, node.inputs, node.outputs, node.locals, 
     			newEqs, node.properties, node.assertions, node.realizabilityInputs, node.contracts);
     }
 
 	private void setPropertyExprs(Node node) {
 		for (Equation eq : node.equations) {
-			//if(eq.expr instanceof QuantExpr){
+			if(eq.expr instanceof QuantExpr){
 				if(eq.lhs.size() != 1){
 					throw new JKindException("There should only be one LHS variable");
 				}
@@ -66,7 +66,7 @@ public class InductiveDataTypeSpecification extends Specification{
 				if(node.properties.contains(prop)){
 					propertyExprs.put(prop, eq.expr);
 				}
-			//}
+			}
 		}
 
     }

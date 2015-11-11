@@ -148,9 +148,9 @@ let
   prop1 = true -> pre(gotFence) => nextPointInFence or gotFence;
   prop0 = true -> pre(locInFence) => locInFence or gotFence or nextPointInFence;
   
-  ----%PROPERTY prop0;
+  --%PROPERTY prop0;
   ----%PROPERTY prop1;
-  --%PROPERTY prop2;
+  ----%PROPERTY prop2;
   
 tel;
   
