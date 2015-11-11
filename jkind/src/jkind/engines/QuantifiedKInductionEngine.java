@@ -125,7 +125,11 @@ public class QuantifiedKInductionEngine extends KInductionEngine {
 		Cvc4MultiSolver cvc4Solver = (Cvc4MultiSolver)solver;
 		Lustre2Sexp translater = new Lustre2SexpMaybeArrow(i);
 		for (Expr expr : invariants) {
-			cvc4Solver.assertUnsatOnly(expr.accept(translater));
+			if (expr instanceof QuantExpr) {
+				cvc4Solver.assertUnsatOnly(expr.accept(translater));
+			} else {
+				cvc4Solver.assertSexp(expr.accept(translater));
+			}
 		}
 	}
 	
