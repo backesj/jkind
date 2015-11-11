@@ -469,13 +469,13 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 		//write("--@contract : "+contract.name+";");
 		newline();
 		for(Expr expr : contract.requires){
-			write("--@require ");
+			write("--@assume ");
 			expr(expr);
 			write(";");
 			newline();
 		}
 		for(Expr expr : contract.ensures){
-			write("--@ensure ");
+			write("--@guarantee ");
 			expr(expr);
 			write(";");
 			newline();
