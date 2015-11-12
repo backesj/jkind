@@ -1,3 +1,55 @@
+--------------------------------------------------------------------------------
+--+----------------------------------------------------------------------------+
+--|                                                                            |
+--|                                                                            |
+--|                                                                            |
+--|                                                                            |
+--|           +-----------------+             +-----------------+              |
+--|   fence   |                 |             |                 |              |
+--+----------->     Mission     |             |   Controller    |              |
+--|           |     Planner     |    plan     |                 |   location   |
+--|           |                 +------------->                 +-------------->
+--|   dest    |                 |             |                 |              |
+--+----------->                 |             |                 |              |
+--|           |                 |             |                 |              |
+--|           +-----------------+             +-----------------+              |
+--|                                                                            |
+--|                                                                            |
+--|                                                                            |
+--|                                                                            |
+--|                                                                            |
+--|                                                                            |
+--+----------------------------------------------------------------------------+
+--------------------------------------------------------------------------------
+--
+-- This lustre file models a system of two components: a "Mission Planner" and a
+-- "Controller".  The system contains two inputs a "fence" and a "destination".
+-- The role of the mission planner is to generate a "plan" which is a set of 
+-- waypoints within the last fence received by the mission planner.  The final
+-- waypoint of the plan is the last destination received by the mission planner.
+-- 
+-- The controller guarantees that it either remains in the same location or 
+-- moves towards the next coordinate in the given plan. The plan is modeled
+-- as a possibly infinite list of x,y coordinates, and the fence is modeled
+-- as a rectangle.  We prove the following properties for this system:
+--
+-- P0. If the previous location was within the fence, then the next location
+--     is in the fence unless the system recently received a new fence
+--
+-- P1. The plan being executed by the controller is always within the most 
+--     recent fence received by the mission computer, Except in the instant
+--     that a new fence is received.
+--       
+-- P2. The mission computer's last received destination is the last coordinate
+--     in the plan being executed by the controller, except in the instant that
+--     a new destination is received.
+--
+-- P3. If the location is outside of the fence and no new fence was received 
+--     recently, then the Manhattan distance from the perimeter of the fence
+--     either remains the same or decreases.
+--
+--------------------------------------------------------------------------------
+
 type Coord = induct {point (x int) (y int)};
 type CoordLst = induct {cons (head Coord) (tail CoordLst) | nil };
 type Fence = induct {corners (top int) (bottom int) (left int) (right int)};
@@ -15,6 +67,20 @@ let
              true
         else
              false;
+tel;
+
+recursive planEndsInCoord(
+  plan : CoordLst;
+  dest : Coord)
+returns(
+  ret : bool);
+let
+  ret = if (is_nil plan) then
+          false
+        else if (is_nil (tail plan)) then
+          (head plan) = dest
+        else
+          (planEndsInCoord (tail plan) dest);
 tel;
 
 recursive planInFence(
@@ -38,9 +104,9 @@ let
           x;
 tel;
 
-node hist (x : bool) returns (r : bool);
+node min(x : int; y : int) returns (ret : int);
 let
-  r = x -> x and pre(r);
+  ret = if (x < y) then x else y;
 tel;
 
 node main(
@@ -49,12 +115,17 @@ node main(
   misPlan : CoordLst;
   location: Coord;
   gotFence : bool;
+  gotDest : bool;
   newPlan : bool)
 returns ();
 var
   prop0 : bool;
   prop1 : bool;
+  prop2 : bool;
+  prop3 : bool;
+  lemma0 : bool;
   misFence : Fence;
+  misDest : Coord;
   locInMisFence : bool;
   nextPoint : Coord;
   ctrPlan : CoordLst;
@@ -63,9 +134,12 @@ var
   curYDist : int;
   preYDist : int;
   nextPointInMisFence : bool;
+  xDistToFence : int;
+  yDistToFence : int;
 let
   --BEGIN MISSION PLANNER VARIABLES
   misFence = if (gotFence) then fence else ((corners 0 0 0 0) -> pre(misFence));
+  misDest = if (gotDest) then dest else ((point 0 0) -> pre(misDest));
     
   --BEGIN CONTROLLER VARIABLES
   ctrPlan = nil ->
@@ -84,12 +158,6 @@ let
               else
                 (head ctrPlan);
                 
-  --BEGIN SYSTEM VARIABLES
-
-  locInMisFence = (coordInFence misFence location);
-  nextPointInMisFence = (coordInFence misFence nextPoint);
-  
-  
   --BEGIN MISSION PLANNER GUARANTEES
   
   --The mission planner guarantees that it always provides a plan
@@ -97,21 +165,23 @@ let
   
   assert (planInFence misFence misPlan);
   
-  --The plan only changes if the destination changes or the fence
-  --changes
-  
-  assert (newPlan => gotFence);
-  assert true -> (misPlan <> pre(misPlan)) => newPlan;
-  
   --if we got a new fence we need a new plan
   
   assert gotFence => newPlan;
+  
+  --if we got a new destination we need a new plan
+  
+  assert gotDest => newPlan;
   
   --We never send a blank plan
   
   assert (newPlan => not (is_nil misPlan));
   
-  --BEGIN CONTROLLER GURANTEES
+  --If we have a plan it always has the distination in it
+  
+  assert not (is_nil misPlan) => (planEndsInCoord misPlan misDest);
+  
+  --BEGIN CONTROLLER GUARANTEES
   
   --the controller is always initially at point 0,0
   assert( (location = (point 0 0)) -> true);
@@ -131,29 +201,50 @@ let
   assert preXDist >= 0 => curXDist >= 0 and curXDist <= preXDist;
   assert preYDist >= 0 => curYDist >= 0 and curYDist <= preYDist;
   
-  
   --BEGIN SYSTEM ASSUMPTIONS
   
   --We assume that if we get a new geofence then the current
   --destination lies within this fence
   
-  --assert(gotFence => (coordInFence fence misDest));
+  assert(gotFence => (coordInFence fence misDest));
+                  
+  --BEGIN SYSTEM VARIABLES
+
+  locInMisFence = (coordInFence misFence location);
+  nextPointInMisFence = (coordInFence misFence nextPoint);
   
   --BEGIN PROPERTIES
   
   --if we are not in the fence then:
-  --1. The fence is new and we have not re-entered.
+  --1. The fence is new.
   --2. We were previously not in the fence.
   
-  prop0 = not locInMisFence => (true -> pre(gotFence) or gotFence or pre(not locInMisFence));
+  lemma0 = true -> (is_nil ctrPlan) => location = pre(location);
+  prop0 = true -> pre(locInMisFence and not gotFence) => locInMisFence or gotFence;
   
-  --The controllers plan is always within the mission computers fence
+  --The controller's plan is always within the mission computer's fence
   --unless we just received a new fence            
   
   prop1 = not gotFence => (planInFence misFence ctrPlan);
+
+  --The destination is at the end of the plan (if we did not just get a new one)
   
+  prop2 = not gotDest => (not (is_nil ctrPlan)) => (planEndsInCoord ctrPlan misDest);
+
+  --If we are outside the fence, then we do not move away from the fence
+  
+  xDistToFence = (min( abs((x location) - (left misFence)), abs((x location) - (right misFence))));
+  yDistToFence = (min( abs((y location) - (top misFence)), abs((y location) - (bottom misFence))));
+  
+  prop3 = true -> not (pre(locInMisFence or gotFence) or gotFence) => 
+    (locInMisFence or
+    (xDistToFence <= pre(xDistToFence) or yDistToFence <= pre(yDistToFence)));
+
+  --%PROPERTY lemma0;
   --%PROPERTY prop0;
   --%PROPERTY prop1;
+  --%PROPERTY prop2;
+  --%PROPERTY prop3;
   
 tel;
   

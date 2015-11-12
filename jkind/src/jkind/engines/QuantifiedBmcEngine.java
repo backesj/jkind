@@ -144,7 +144,7 @@ public class QuantifiedBmcEngine extends BmcEngine{
 		
 		//strengthen the unsat process if the current query is not yet completed
 		Cvc4MultiSolver multiSolver = (Cvc4MultiSolver)solver;
-		if(!multiSolver.asyncQueryCompleted()){
+		if(multiSolver.isRunning()){
 			multiSolver.cancelAsyncQuery();
 			addPropertiesAsInvariants(vm.k, vm.valid);
 			multiSolver.asyncQuery(currentQuery);

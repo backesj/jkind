@@ -73,10 +73,10 @@ public class QuantifiedKInductionEngine extends KInductionEngine {
 			throw new JKindException("QuantifiedBmcEngine expects "
 					+ "its solver to be the Cvc4MultiSolver");
 		}
-		if(!properties.contains(prop)){
-			throw new JKindException("We assume that this property "
-					+ "is in the properties at the begining of the call");
-		}
+//		if(!properties.contains(prop)){
+//			throw new JKindException("We assume that this property "
+//					+ "is in the properties at the begining of the call");
+//		}
 		
 		Cvc4MultiSolver multiSolver = (Cvc4MultiSolver)solver;
 		Sexp sexp = getInductiveQuery(k,prop);

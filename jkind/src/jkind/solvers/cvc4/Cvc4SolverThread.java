@@ -1,6 +1,7 @@
 package jkind.solvers.cvc4;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -26,14 +27,16 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
         this.outgoing = outgoing;
     }
 
-    @Override
-    public void run() {
-       if(storedQuery == null){
-           throw new JKindException("Cvc4SolverThread started without a stored query");
-       }
-       cancelableQuery();
-    }
-    
+	@Override
+	public void run() {
+		if (storedQuery == null) {
+			throw new JKindException("Cvc4SolverThread started without a stored query");
+		}
+		if (!destroyed.get()) {
+			cancelableQuery();
+		}
+	}
+
     public void destory(){
         destroyed.set(true);
     }

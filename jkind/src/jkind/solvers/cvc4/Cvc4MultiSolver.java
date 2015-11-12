@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import jkind.JKindException;
 import jkind.lustre.InductType;
@@ -32,6 +33,7 @@ public class Cvc4MultiSolver extends Solver {
     private List<InductType> definedInductTypes = new ArrayList<>();
     private Specification initialSpec = null;
     private boolean asyncQueryFinished = true;
+    private boolean running = false;
 
     public Cvc4MultiSolver(String scratchBase) {
         this.scratchBase = scratchBase;
@@ -137,15 +139,16 @@ public class Cvc4MultiSolver extends Solver {
         satSolver.define(relation);
         unsatSolver.define(relation);
     }
-    
-    private void startQuery(Sexp sexp){
-    	 satSolver.storeQuery(sexp);
-         unsatSolver.storeQuery(sexp);
-         Thread satThread = new Thread(satSolver);
-         Thread unsatThread = new Thread(unsatSolver);
-         satThread.start();
-         unsatThread.start();
-    }
+
+	private void startQuery(Sexp sexp) {
+		running = true;
+		satSolver.storeQuery(sexp);
+		unsatSolver.storeQuery(sexp);
+		Thread satThread = new Thread(satSolver);
+		Thread unsatThread = new Thread(unsatSolver);
+		satThread.start();
+		unsatThread.start();
+	}
     
     private Result waitAndGetQueryResult(){
     	while(incoming.isEmpty()){
@@ -171,9 +174,14 @@ public class Cvc4MultiSolver extends Solver {
         restartSolver(unsatSolver);
         restartSolver(satSolver);
         incoming.clear(); //sometimes we get multiple results that we need to clear
+        running = false;
         return multiResult.result;
     }
     
+    public boolean isRunning(){
+    	return running;
+    	
+    }
     @Override
     public Result query(Sexp sexp) {
         startQuery(sexp);
@@ -181,7 +189,7 @@ public class Cvc4MultiSolver extends Solver {
     }
 
     public void asyncQuery(Sexp sexp){
-    	if(!asyncQueryFinished){
+    	if(!asyncQueryFinished || running){
     		throw new JKindException("Tried to start another query before it finished");
     	}
     	startQuery(sexp);
@@ -191,6 +199,7 @@ public class Cvc4MultiSolver extends Solver {
     	restartSolver(unsatSolver);
     	restartSolver(satSolver);
     	incoming.clear();
+    	running = false;
     	asyncQueryFinished = true;
     }
     
@@ -231,11 +240,8 @@ public class Cvc4MultiSolver extends Solver {
     public void pop() {
         unsatAssertionsQueue.pop();
         satAssertionsQueue.pop();
-        
-        restartSolver(satSolver);
-        restartSolver(unsatSolver);
-        //satSolver.pop();
-        //unsatSolver.pop();
+        satSolver.pop();
+        unsatSolver.pop();
     }
 
     @Override
