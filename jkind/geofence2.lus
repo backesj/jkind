@@ -23,7 +23,7 @@
 --------------------------------------------------------------------------------
 --
 -- This lustre file models a system of two components: a "Mission Planner" and a
--- "Controller".  The system contains two inputs a "fence" and a "destination".
+-- "Controller".  The system contains two inputs: a "fence" and a "destination".
 -- The role of the mission planner is to generate a "plan" which is a set of 
 -- waypoints within the last fence received by the mission planner.  The final
 -- waypoint of the plan is the last destination received by the mission planner.
