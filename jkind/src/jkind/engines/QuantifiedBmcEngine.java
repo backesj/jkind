@@ -61,6 +61,7 @@ public class QuantifiedBmcEngine extends BmcEngine{
 
 				if (result instanceof SatResult) {
 					sendInvalid(singleProp, k, model);
+					properties.remove(prop);
 				} else {
 					sendUnknown(singleProp);
 				}
@@ -157,8 +158,10 @@ public class QuantifiedBmcEngine extends BmcEngine{
 		List<Expr> newInvariants = new ArrayList<>();
 		for(String str : valid){
 			Expr expr = exprMap.get(str);
-			expr = expr == null ? new IdExpr(str) : expr;
-			newInvariants.add(expr);
+			//we only care about strengthening with quantified expressions
+			if (expr != null) {
+				newInvariants.add(expr);
+			}
 		}
 		assertNewInvariants(newInvariants, k);
 	}
