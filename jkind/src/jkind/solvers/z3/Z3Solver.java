@@ -1,10 +1,17 @@
 package jkind.solvers.z3;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import jkind.JKindException;
 import jkind.lustre.InductType;
+import jkind.lustre.InductTypeElement;
 import jkind.lustre.NamedType;
+import jkind.lustre.TypeConstructor;
 import jkind.lustre.VarDecl;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
@@ -117,8 +124,5 @@ public class Z3Solver extends SmtLib2Solver {
 		return realizabilityQuery(outputs, transition, properties, 0);
 	}
 
-    @Override
-    public void define(InductType type) {
-        throw new JKindException("Z3 does not support inductive datatypes");
-    }
+	
 }

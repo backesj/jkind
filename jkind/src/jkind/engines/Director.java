@@ -157,6 +157,11 @@ public class Director extends MessageHandler {
 		//if the specification contains inductive datatypes we are
 		//very limited about what engines we can run
 		boolean containsInductDataTypes = spec instanceof InductiveDataTypeSpecification;
+		boolean containsQuantifiers = false;
+		
+		if(containsInductDataTypes){
+			containsQuantifiers = ((InductiveDataTypeSpecification)spec).containsQuantsOrRecFuns();
+		}
 		
 		if(containsInductDataTypes){
 			if(settings.smoothCounterexamples){
@@ -186,7 +191,7 @@ public class Director extends MessageHandler {
 		}
 		
 		if (settings.boundedModelChecking) {
-			if(containsInductDataTypes){
+			if(containsQuantifiers){
 				addEngine(new QuantifiedBmcEngine((InductiveDataTypeSpecification) spec, settings, this));
 			}else{
 				addEngine(new BmcEngine(spec, settings, this));
@@ -194,7 +199,7 @@ public class Director extends MessageHandler {
 		}
 
 		if (settings.kInduction) {
-			if (containsInductDataTypes) {
+			if (containsQuantifiers) {
 				addEngine(new QuantifiedKInductionEngine((InductiveDataTypeSpecification) spec, settings, this));
 			} else {
 				addEngine(new KInductionEngine(spec, settings, this));

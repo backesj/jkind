@@ -68,7 +68,10 @@ public class InductiveDataTypeSpecification extends Specification{
 				}
 			}
 		}
-
     }
+	
+	public boolean containsQuantsOrRecFuns(){
+		return propertyExprs.size() > 0 || functions.size() > 0;
+	}
     
 }

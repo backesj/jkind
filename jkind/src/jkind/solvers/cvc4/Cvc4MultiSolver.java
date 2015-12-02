@@ -171,8 +171,15 @@ public class Cvc4MultiSolver extends Solver {
 //            restartSolver(satSolver);
 //        }
         
-        restartSolver(unsatSolver);
-        restartSolver(satSolver);
+        if(satSolver.isRunning()){
+        	restartSolver(satSolver);
+        }
+        if(unsatSolver.isRunning()){
+        	restartSolver(unsatSolver);
+        }
+        
+//        restartSolver(unsatSolver);
+//        restartSolver(satSolver);
         incoming.clear(); //sometimes we get multiple results that we need to clear
         running = false;
         return multiResult.result;
@@ -180,8 +187,8 @@ public class Cvc4MultiSolver extends Solver {
     
     public boolean isRunning(){
     	return running;
-    	
     }
+    
     @Override
     public Result query(Sexp sexp) {
         startQuery(sexp);
@@ -194,10 +201,14 @@ public class Cvc4MultiSolver extends Solver {
     	}
     	startQuery(sexp);
     }
-    
-    public void cancelAsyncQuery(){
-    	restartSolver(unsatSolver);
-    	restartSolver(satSolver);
+
+	public void cancelAsyncQuery() {
+		if (unsatSolver.isRunning()) {
+			restartSolver(unsatSolver);
+		}
+		if (satSolver.isRunning()) {
+			restartSolver(satSolver);
+		}
     	incoming.clear();
     	running = false;
     	asyncQueryFinished = true;

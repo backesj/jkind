@@ -1,0 +1,45 @@
+type List = induct {list_cons (list_head int) (list_tail List) | list_nil };
+
+recursive list_equiv (left : List; right : List) returns (r : bool);
+let
+  r = if (is_list_nil left)
+        then (if (is_list_nil right) then true else false)
+        else (if (is_list_nil right) then false else (((list_head left) = (list_head right)) and (list_equiv (list_tail left) (list_tail right))));
+tel;
+
+recursive make_count (start : int; stop : int) returns (l : List);
+let
+    l = if (start > stop) then list_nil
+        else (list_cons start (make_count (start + 1) stop));
+tel;
+
+node main(input1 : int; input2 : int; inputL : List) returns ();
+var
+  list_of_three_true : bool;
+  list_of_three_false : bool;
+  list_of_fifty_true : bool;
+  list_of_fifty_false : bool;
+  count_3 : List;
+  count_50 : List;
+let
+  count_3 = (list_cons 1 (list_cons 2 (list_cons 3 list_nil)));
+  count_50 = (list_cons 1 (list_cons 2 (list_cons 3 (list_cons 4 (list_cons 5 (list_cons 6 (list_cons 7 (list_cons 8 (list_cons 9 (list_cons 10 (list_cons 11 (list_cons 12 (list_cons 13 (list_cons 14 (list_cons 15 (list_cons 16 (list_cons 17 (list_cons 18 (list_cons 19 (list_cons 20 (list_cons 21 (list_cons 22 (list_cons 23 (list_cons 24 (list_cons 25 (list_cons 26 (list_cons 27 (list_cons 28 (list_cons 29 (list_cons 30 (list_cons 31 (list_cons 32 (list_cons 33 (list_cons 34 (list_cons 35 (list_cons 36 (list_cons 37 (list_cons 38 (list_cons 39 (list_cons 40 (list_cons 41 (list_cons 42 (list_cons 43 (list_cons 44 (list_cons 45 (list_cons 46 (list_cons 47 (list_cons 48 (list_cons 49 (list_cons 50 (list_nil)))))))))))))))))))))))))))))))))))))))))))))))))));
+
+  list_of_three_true = 
+    (list_equiv count_3 (make_count 1 3));
+
+  list_of_three_false = 
+    (list_equiv count_3 (list_cons 5 (list_cons 2 (list_cons 3 list_nil))));
+
+  list_of_fifty_true =
+   (list_equiv count_50 (make_count 1 50));
+
+  list_of_fifty_false =
+   (list_equiv count_50 (make_count 1 49));
+
+  --%PROPERTY list_of_three_true;
+  --%PROPERTY list_of_three_false;
+  --%PROPERTY list_of_fifty_true;
+  ---%PROPERTY list_of_fifty_false;
+tel;
+

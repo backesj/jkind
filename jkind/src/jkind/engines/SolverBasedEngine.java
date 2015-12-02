@@ -5,6 +5,7 @@ import java.util.List;
 
 import jkind.JKindException;
 import jkind.JKindSettings;
+import jkind.SolverOption;
 import jkind.analysis.LinearChecker;
 import jkind.analysis.YicesArithOnlyCheck;
 import jkind.lustre.Expr;
@@ -59,13 +60,29 @@ public abstract class SolverBasedEngine extends Engine {
 	protected void initializeSolver() {
 		solver = getSolver();
 		
-		if(spec instanceof InductiveDataTypeSpecification && !(solver instanceof Cvc4Solver || solver instanceof Cvc4MultiSolver)){
-			throw new JKindException("The model contains inductive datatypes. CVC4 must be used"); 
+		boolean containsInductiveDataTypes = (spec instanceof InductiveDataTypeSpecification);
+		boolean containsRecursiveFunctions = false;
+		if(containsInductiveDataTypes){
+			containsRecursiveFunctions = ((InductiveDataTypeSpecification)spec).containsQuantsOrRecFuns();
+		}
+		
+		if(containsRecursiveFunctions && !(solver instanceof Cvc4MultiSolver)){
+			throw new JKindException("The model contains recursive functions. CVC4 must be used"); 
+		}
+		
+		if(containsInductiveDataTypes && !(settings.solver != SolverOption.Z3 || settings.solver != SolverOption.CVC4)){
+			throw new JKindException("The model contains inducive data types. CVC4 or Z3 must be used");
 		}
 		
 		solver.initialize(spec);
+		if (containsInductiveDataTypes) {
+			for (InductType type : ((InductiveDataTypeSpecification) spec).inductTypes) {
+				solver.define(type);
+			}
+		}
 		solver.define(spec.transitionRelation);
 		solver.define(new VarDecl(INIT.str, NamedType.BOOL));
+		
 	}
 
 	private Solver getSolver() {

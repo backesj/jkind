@@ -21,6 +21,7 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
     private Sexp storedQuery = null;
     private final BlockingQueue<MultiSolverResult> outgoing;
     private AtomicBoolean destroyed = new AtomicBoolean(false);
+    private AtomicBoolean running = new AtomicBoolean(false);
     
     public Cvc4SolverThread(String scratchBase, ProcessBuilder processBuilder, BlockingQueue<MultiSolverResult> outgoing) {
         super(scratchBase, processBuilder);
@@ -29,16 +30,23 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
 
 	@Override
 	public void run() {
+		running.set(true);
 		if (storedQuery == null) {
 			throw new JKindException("Cvc4SolverThread started without a stored query");
 		}
 		if (!destroyed.get()) {
 			cancelableQuery();
 		}
+		running.set(false);
 	}
 
     public void destory(){
         destroyed.set(true);
+        running.set(false);
+    }
+    
+    public boolean isRunning(){
+    	return running.get();
     }
     
     public void storeQuery(Sexp sexp){

@@ -43,42 +43,42 @@ public class Cvc4Solver extends SmtLib2Solver {
 		return "cvc4";
 	}
 	
-    public void define(InductType type) {
-
-        if (!definedTypes.contains(type.name)) {
-            definedTypes.add(type.name);
-            List<Sexp> constructorExprs = new ArrayList<>();
-            for (TypeConstructor constructor : type.constructors) {
-                // args.add(new Symbol(constructor.name));
-                List<Sexp> args = new ArrayList<>();
-                for (InductTypeElement element : constructor.elements) {
-                    args.add(new Cons(element.name, type(element.type)));
-                }
-                constructorExprs.add(new Cons(constructor.name, args));
-            }
-            Sexp cons = new Cons(type.name, constructorExprs);
-            cons = new Cons("declare-datatypes", new Symbol("()"), new Symbol("(" + cons.toString() + ")"));
-            send(cons);
-            isWellFounded(); //checks for well-foundedness
-        }
-	}
-
-    protected boolean isWellFounded() {
-        try {
-            if (fromSolver.ready()) {
-                String line = fromSolver.readLine();
-                if (line.contains(" is not well-founded")) {
-                    int endIndex = line.indexOf(" is not well-founded");
-                    // TODO: this will break if the error message changes
-                    String typeName = line.substring(21, endIndex);
-                    throw new JKindException("Type '" + typeName + "' is not well-founded");
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return true;
-    }
+//    public void define(InductType type) {
+//
+//        if (!definedTypes.contains(type.name)) {
+//            definedTypes.add(type.name);
+//            List<Sexp> constructorExprs = new ArrayList<>();
+//            for (TypeConstructor constructor : type.constructors) {
+//                // args.add(new Symbol(constructor.name));
+//                List<Sexp> args = new ArrayList<>();
+//                for (InductTypeElement element : constructor.elements) {
+//                    args.add(new Cons(element.name, type(element.type)));
+//                }
+//                constructorExprs.add(new Cons(constructor.name, args));
+//            }
+//            Sexp cons = new Cons(type.name, constructorExprs);
+//            cons = new Cons("declare-datatypes", new Symbol("()"), new Symbol("(" + cons.toString() + ")"));
+//            send(cons);
+//            isWellFounded(); //checks for well-foundedness
+//        }
+//	}
+//
+//    protected boolean isWellFounded() {
+//        try {
+//            if (fromSolver.ready()) {
+//                String line = fromSolver.readLine();
+//                if (line.contains(" is not well-founded")) {
+//                    int endIndex = line.indexOf(" is not well-founded");
+//                    // TODO: this will break if the error message changes
+//                    String typeName = line.substring(21, endIndex);
+//                    throw new JKindException("Type '" + typeName + "' is not well-founded");
+//                }
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        return true;
+//    }
     
 	@Override
 	public void initialize(Specification spec) {
