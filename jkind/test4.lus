@@ -23,22 +23,17 @@ tel;
 
 node main(i : int) returns();
 var
-  ok4 : bool;
-  ok5 : bool;
-  ok6 : bool;
-  
   l : Lst;
-  prop : bool;
+  neg_in_past : bool;
+  prop0 : bool;
+  prop1 : bool;
 let
   l = (cons i nil) -> (cons i (pre l));
-  ok4 = forall (j : int; q : Lst; r : Lst). (in j q) => (in j (app r q));
-  ok5 = forall (j : int; q : Lst; r : Lst). (in j q) => (in j (app q r));
+  neg_in_past = i < 0 or (false -> pre(neg_in_past));
+  prop0 = not (pos l) => neg_in_past;
+  prop1 = forall (j : int) . (in j l) and not (j >= 0) => neg_in_past;
 
-  ok6 = forall (j : int; q : Lst) . (in j q) => (in j (rev q));
-  prop = forall (j : int) . (in j l) => (in j (rev l));
-
-  --%PROPERTY ok4;
-  --%PROPERTY ok5;
-  --%PROPERTY ok6;
-  --%PROPERTY prop;
+  ----%PROPERTY prop0;
+  --%PROPERTY prop1;
+  
 tel;

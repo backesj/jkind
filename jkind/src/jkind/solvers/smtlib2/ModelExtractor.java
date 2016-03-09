@@ -5,12 +5,14 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jkind.JKindException;
 import jkind.lustre.Type;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
+import jkind.solvers.Model;
 import jkind.solvers.smtlib2.SmtLib2Parser.BodyContext;
 import jkind.solvers.smtlib2.SmtLib2Parser.ConsBodyContext;
 import jkind.solvers.smtlib2.SmtLib2Parser.DeclareDataTypesContext;
@@ -18,13 +20,16 @@ import jkind.solvers.smtlib2.SmtLib2Parser.DeclareSortContext;
 import jkind.solvers.smtlib2.SmtLib2Parser.DefineContext;
 import jkind.solvers.smtlib2.SmtLib2Parser.DefinefunContext;
 import jkind.solvers.smtlib2.SmtLib2Parser.IdContext;
+import jkind.solvers.smtlib2.SmtLib2Parser.LetBodyContext;
 import jkind.solvers.smtlib2.SmtLib2Parser.ModelContext;
 import jkind.solvers.smtlib2.SmtLib2Parser.SymbolBodyContext;
 import jkind.solvers.smtlib2.SmtLib2Parser.TypeConstructorContext;
 
 public class ModelExtractor {
-	public static SmtLib2Model getModel(ModelContext ctx, Map<String, Type> varTypes) {
-		SmtLib2Model model = new SmtLib2Model(varTypes);
+
+	
+	public static SmtLib2Model getModel(ModelContext ctx, Map<String, Type> varTypes, Set<String> typeConstructors) {
+		SmtLib2Model model = new SmtLib2Model(varTypes, typeConstructors);
 		for (DefineContext defineCtx : ctx.define()) {
 		    if(defineCtx instanceof DefinefunContext){
 		        walkDefine((DefinefunContext) defineCtx, model);
@@ -64,6 +69,13 @@ public class ModelExtractor {
 				args.add(sexp(sub));
 			}
 			return new Cons(cbc.fn().getText(), args);
+		} else if (ctx instanceof LetBodyContext) {
+			LetBodyContext lbc = (LetBodyContext) ctx;
+			List<Sexp> args = new ArrayList<>();
+			for (BodyContext sub : lbc.bindings){
+				args.add(sexp(sub));
+			}
+			return new Cons("let", new Cons(args), sexp(lbc.expr));
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -88,4 +100,5 @@ public class ModelExtractor {
 			return string;
 		}
 	}
+
 }

@@ -23,6 +23,7 @@ type: 'Bool' | 'Int' | 'Real' | id;
 
 body: symbol                               # symbolBody
     | '(' fn body* ')'                     # consBody
+    | '(' 'let' '(' bindings+=body* ')' expr=body ')'    # letBody
     ;
 
 fn: '=' | '-' | '/' | 'and' | 'ite' | 'not' | '>=' | '<=' | '<' | '>' | id;

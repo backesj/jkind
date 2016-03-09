@@ -17,6 +17,13 @@ import jkind.util.BigFraction;
 public class SmtLib2Model extends Model {
 	private final Map<String, Sexp> values = new HashMap<>();
 	
+	public SmtLib2Model(Map<String, Type> varTypes, Set<String> typeConstructors) {
+		 this(varTypes);
+		 for(String type : typeConstructors){
+			 addTypeConstructor(type);
+		 }
+	}
+	
 	public SmtLib2Model(Map<String, Type> varTypes) {
 		super(varTypes);
 	}

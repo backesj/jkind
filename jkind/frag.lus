@@ -1,0 +1,65 @@
+type List = induct {cons (head int) (tail List) | nil };
+type ListList = induct {lcons (lhead List) (ltail ListList) | lnil };
+
+recursive append(l1 : List; l2 : List) returns (res : List);
+let
+  res = if (is_nil l1) then l2 else (cons (head l1) (append (tail l1) l2));
+tel;
+
+recursive frag (l : List) returns (ll : ListList);
+let
+  ll = if (is_nil l) then 
+         lnil
+       else
+         (lcons (cons (head l) nil) (frag (tail l)));
+tel;
+
+recursive refrag (ll : ListList) returns (rr : ListList);
+let
+  rr = if (is_lnil ll) then 
+         lnil
+       else if (is_lnil (ltail ll)) then
+         ll
+       else
+         (lcons (append (lhead ll) (lhead (ltail ll))) (refrag (ltail (ltail ll))));
+tel;
+
+recursive defrag (ll : ListList) returns (r : List);
+let
+  r = if (is_lnil ll) then nil
+      else (append (lhead ll) (defrag (ltail ll)));
+tel;
+
+node main() returns ();
+var
+  defrag_frag : bool;
+  lemma0 : bool;
+  lemma1 : bool;
+  lemma2 : bool;
+  lemma3 : bool;
+  lemma4 : bool;
+  defrag_refrag : bool;
+  app_assoc : bool;
+let
+  app_assoc = forall (x : List; y : List; z : List) . (append x (append y z)) = (append (append x y) z);
+  defrag_frag = forall (inputL : List) . (inputL = (defrag (frag inputL)));
+  lemma0 = forall (ll : ListList) . (is_lnil ll) => (defrag ll) = (defrag (refrag ll));
+  lemma1 = forall (ll : ListList) . (is_lnil (ltail ll)) => (defrag ll) = (defrag (refrag ll)); 
+  lemma2 = forall (l1 : List; l2 : List; ll1 : ListList) . (defrag (refrag (lcons l1 (lcons l2 ll1)))) = (append l1 (append l2 (defrag (refrag ll1))));
+  --lemma3 = forall (l1 : List; l2 : List; ll1 : ListList) . (defrag (lcons l1 (lcons l2 ll1))) = (append l1 (append l2 (defrag ll1)));
+  lemma3 = forall (ll : ListList) . (is_lnil ll) or (is_lnil (ltail ll)) or (is_lcons (ltail ll));
+
+  lemma4 = forall (ll : ListList; l1 : List; l2 : List) . (defrag (lcons (append l1 l2) ll)) = (append l1 (append l2 (defrag ll)));
+
+  defrag_refrag = forall (ll : ListList) .  ((defrag ll) = (defrag (refrag ll)));
+ 
+  
+  --%PROPERTY app_assoc;
+  --%PROPERTY defrag_frag;
+  --%PROPERTY lemma0;
+  --%PROPERTY lemma1;
+  --%PROPERTY lemma2;
+  --%PROPERTY lemma3;
+  --%PROPERTY lemma4;
+  --%PROPERTY defrag_refrag;
+tel;

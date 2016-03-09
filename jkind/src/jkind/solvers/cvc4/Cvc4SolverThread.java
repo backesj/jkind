@@ -1,6 +1,7 @@
 package jkind.solvers.cvc4;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -20,22 +21,32 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
     private Sexp storedQuery = null;
     private final BlockingQueue<MultiSolverResult> outgoing;
     private AtomicBoolean destroyed = new AtomicBoolean(false);
+    private AtomicBoolean running = new AtomicBoolean(false);
     
     public Cvc4SolverThread(String scratchBase, ProcessBuilder processBuilder, BlockingQueue<MultiSolverResult> outgoing) {
         super(scratchBase, processBuilder);
         this.outgoing = outgoing;
     }
 
-    @Override
-    public void run() {
-       if(storedQuery == null){
-           throw new JKindException("Cvc4SolverThread started without a stored query");
-       }
-       cancelableQuery();
-    }
-    
+	@Override
+	public void run() {
+		running.set(true);
+		if (storedQuery == null) {
+			throw new JKindException("Cvc4SolverThread started without a stored query");
+		}
+		if (!destroyed.get()) {
+			cancelableQuery();
+		}
+		running.set(false);
+	}
+
     public void destory(){
         destroyed.set(true);
+        running.set(false);
+    }
+    
+    public boolean isRunning(){
+    	return running.get();
     }
     
     public void storeQuery(Sexp sexp){
@@ -44,6 +55,13 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
         }
         storedQuery = sexp;
     }
+    
+    @Override
+    protected void send(String str) {
+    	if(!destroyed.get()){
+    		super.send(str);
+    	}
+	}
     
     private void cancelableQuery(){
         Result result = null;
@@ -107,7 +125,11 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
                     readChar = false;
                 }
                 if(destroyed.get()){
-                    this.process.destroyForcibly();
+                	//might be null if we created the solver
+                	//during a shutdown signal
+					if (this.process != null) {
+						this.process.destroyForcibly();
+					}
                     return null;
                 }else if(!readChar){
                     Thread.sleep(10);

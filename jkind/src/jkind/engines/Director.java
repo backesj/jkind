@@ -156,9 +156,14 @@ public class Director extends MessageHandler {
 		
 		//if the specification contains inductive datatypes we are
 		//very limited about what engines we can run
-		boolean noInductDataTypes = !(spec instanceof InductiveDataTypeSpecification);
+		boolean containsInductDataTypes = spec instanceof InductiveDataTypeSpecification;
+		boolean containsQuantifiers = false;
 		
-		if(!noInductDataTypes){
+		if(containsInductDataTypes){
+			containsQuantifiers = ((InductiveDataTypeSpecification)spec).containsQuantsOrRecFuns();
+		}
+		
+		if(containsInductDataTypes){
 			if(settings.smoothCounterexamples){
 				Output.println("Warning!: model contains inductive datatypes. "
 						+ "Smooth counterexamples have been disabled");
@@ -167,6 +172,11 @@ public class Director extends MessageHandler {
 			if(settings.intervalGeneralization){
 				Output.println("Warning!: model contains inductive datatypes. "
 						+ "Interval Generalization has been disabled");
+			}
+			
+			if(settings.invariantGeneration){
+				Output.println("Warning!: model contains inductive datatypes. "
+						+ "Invariant Generation has been disabled");
 			}
 			
 			if(settings.pdrMax > 0){
@@ -181,18 +191,22 @@ public class Director extends MessageHandler {
 		}
 		
 		if (settings.boundedModelChecking) {
-			addEngine(new BmcEngine(spec, settings, this));
+			if(containsQuantifiers){
+				addEngine(new QuantifiedBmcEngine((InductiveDataTypeSpecification) spec, settings, this));
+			}else{
+				addEngine(new BmcEngine(spec, settings, this));
+			}
 		}
 
 		if (settings.kInduction) {
-			if (!noInductDataTypes) {
-				addEngine(new QuantifiedKInductionEngine(spec, settings, this));
+			if (containsQuantifiers) {
+				addEngine(new QuantifiedKInductionEngine((InductiveDataTypeSpecification) spec, settings, this));
 			} else {
 				addEngine(new KInductionEngine(spec, settings, this));
 			}
 		}
 
-		if (settings.invariantGeneration) {
+		if (settings.invariantGeneration && !containsInductDataTypes) {
 			addEngine(new GraphInvariantGenerationEngine(spec, settings, this));
 		}
 
@@ -200,19 +214,19 @@ public class Director extends MessageHandler {
 			addEngine(new InvariantReductionEngine(spec, settings, this));
 		}
 
-		if (settings.smoothCounterexamples && noInductDataTypes) {
+		if (settings.smoothCounterexamples && !containsInductDataTypes) {
 			addEngine(new SmoothingEngine(spec, settings, this));
 		}
 
-		if (settings.intervalGeneralization && noInductDataTypes) {
+		if (settings.intervalGeneralization && !containsInductDataTypes) {
 			addEngine(new IntervalGeneralizationEngine(spec, settings, this));
 		}
 
-		if (settings.pdrMax > 0 && noInductDataTypes) {
+		if (settings.pdrMax > 0 && !containsInductDataTypes) {
 			addEngine(new PdrEngine(spec, settings, this));
 		}
 
-		if (settings.readAdvice != null && noInductDataTypes) {
+		if (settings.readAdvice != null && !containsInductDataTypes) {
 			addEngine(new AdviceEngine(spec, settings, this, inputAdvice));
 		}
 	}
