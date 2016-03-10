@@ -39,8 +39,13 @@ public class JKind {
             } else {
                 userSpec = new Specification(main);
             }
-            Specification analysisSpec = getAnalysisSpec(userSpec, settings);
-			new Director(settings, userSpec, analysisSpec).run();
+            Specification analysisSpec;
+            if (userSpec instanceof InductiveDataTypeSpecification) {
+                analysisSpec = userSpec;
+            } else {
+                analysisSpec = getAnalysisSpec(userSpec, settings);
+            }
+            new Director(settings, userSpec, analysisSpec).run();
 
 			System.exit(0); // Kills all threads
 		} catch (Throwable t) {
