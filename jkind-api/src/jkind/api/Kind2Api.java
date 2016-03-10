@@ -33,6 +33,7 @@ public class Kind2Api extends KindApi {
 	 */
 	@Override
 	public void execute(Program program, JKindResult result, IProgressMonitor monitor) {
+	    program = WorkaroundKind2ForwardReference.program(program);
 		execute(program.toString(), result, monitor);
 	}
 	
