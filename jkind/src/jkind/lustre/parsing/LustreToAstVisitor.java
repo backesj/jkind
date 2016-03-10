@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import jkind.ExitCodes;
 import jkind.Output;
@@ -79,6 +78,7 @@ import jkind.lustre.parsing.LustreParser.PropertyContext;
 import jkind.lustre.parsing.LustreParser.RealExprContext;
 import jkind.lustre.parsing.LustreParser.RealTypeContext;
 import jkind.lustre.parsing.LustreParser.RealizabilityInputsContext;
+import jkind.lustre.parsing.LustreParser.SupportContext;
 import jkind.lustre.parsing.LustreParser.RecordAccessExprContext;
 import jkind.lustre.parsing.LustreParser.RecordEIDContext;
 import jkind.lustre.parsing.LustreParser.RecordExprContext;
@@ -145,13 +145,14 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		List<Equation> equations = equations(ctx.equation());
 		List<String> properties = properties(ctx.property());
 		List<Expr> assertions = assertions(ctx.assertion());
-		Optional<List<String>> realizabilityInputs = realizabilityInputs(ctx.realizabilityInputs());
-		Optional<List<Contract>> contracts = contracts(ctx.contract());
+		List<String> support = support(ctx.support());
+		List<String> realizabilityInputs = realizabilityInputs(ctx.realizabilityInputs());
+		Contract contract = null;
 		if (!ctx.main().isEmpty()) {
 			main = id;
 		}
 		return new Node(loc(ctx), id, inputs, outputs, locals, equations, properties, assertions,
-				realizabilityInputs, contracts);
+				realizabilityInputs, contract, support);
 	}
 
 	private List<VarDecl> varDecls(VarDeclListContext listCtx) {
@@ -200,21 +201,7 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		}
 		return props;
 	}
-	
-	private Optional<List<Contract>> contracts(List<ContractContext> ctxs) {
-		List<Contract> contracts = new ArrayList<>();
-		for (ContractContext ctx : ctxs) {
-			String name = ctx.contract_id().ID().getText();
-			Contract contract = new Contract(name, requires(ctx.require()), ensures(ctx.ensure()));
-			contracts.add(contract);
-		}
-		
-		if(contracts.isEmpty()){
-			return Optional.empty();
-		}
-		return Optional.of(contracts);
-	}
-	
+
 	private List<Expr> requires(List<RequireContext> ctxs){
 		List<Expr> requires = new ArrayList<>();
 		for(RequireContext ctx : ctxs){
@@ -239,9 +226,7 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		return assertions;
 	}
 
-
-	
-	private Optional<List<String>> realizabilityInputs(List<RealizabilityInputsContext> ctxs) {
+	private List<String> realizabilityInputs(List<RealizabilityInputsContext> ctxs) {
 		if (ctxs.size() > 1) {
 			fatal(ctxs.get(1), "at most one realizability statement allowed");
 		}
@@ -251,10 +236,26 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 			for (TerminalNode ictx : ctx.ID()) {
 				ids.add(ictx.getText());
 			}
-			return Optional.of(ids);
+			return ids;
 		}
 
-		return Optional.empty();
+		return null;
+	}
+	
+	private List<String> support(List<SupportContext> ctxs) {
+		if (ctxs.size() > 1) {
+			fatal(ctxs.get(1), "at most one support statement allowed");
+		}
+
+		for (SupportContext ctx : ctxs) {
+			List<String> ids = new ArrayList<>();
+			for (TerminalNode ictx : ctx.ID()) {
+				ids.add(ictx.getText());
+			}
+			return ids;
+		}
+
+		return null;
 	}
 
 	private Type topLevelType(String id, TopLevelTypeContext ctx) {

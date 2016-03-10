@@ -43,7 +43,7 @@ public class XmlParseThread extends Thread {
 	private final Backend backend;
 	private final DocumentBuilderFactory factory;
 	private volatile Throwable throwable;
-	private Map<String, List<PropertyResult>> analysisToProps;
+	private Map<String, List<PropertyResult>> analysisToProps = new HashMap<>();
 
 	public XmlParseThread(InputStream xmlStream, JKindResult result, Backend backend) {
 		super("Xml Parse");
@@ -71,7 +71,7 @@ public class XmlParseThread extends Thread {
 			StringBuilder buffer = null;
 			String line;
 			String analysis = null;
-			analysisToProps = new HashMap<>();
+
 			while ((line = lines.readLine()) != null) {
 				System.out.println(line);
 				boolean beginProperty = line.contains("<Property ");
@@ -80,7 +80,7 @@ public class XmlParseThread extends Thread {
 				boolean endProgress = line.contains("</Progress>");
 				boolean beginAnalysis = line.contains("<AnalysisStart");
 				boolean endAnalysis = line.contains("<AnalysisStop");
-				
+
 				if (beginProgress && endProgress) {
 					// Kind 2 progress format uses a single line
 					parseKind2ProgressXml(line, analysis);
@@ -95,10 +95,10 @@ public class XmlParseThread extends Thread {
 					buffer.append(line);
 					parseJKindProgressXml(buffer.toString());
 					buffer = null;
-				}else if (beginAnalysis){
-				    analysis = parseKind2AnalysisXml(line);
-				}else if (endAnalysis){
-				    analysis = null;
+				} else if (beginAnalysis) {
+					analysis = parseKind2AnalysisXml(line);
+				} else if (endAnalysis) {
+					analysis = null;
 				} else if (buffer != null) {
 					buffer.append(line);
 				}
@@ -109,15 +109,13 @@ public class XmlParseThread extends Thread {
 	}
 
 	private String parseKind2AnalysisXml(String line) {
-	    Element progressElement = parseXml(line);
-	    String analysis = progressElement.getAttribute("top");
-	    if(!analysisToProps.containsKey(analysis)){
-	        analysisToProps.put(analysis, new ArrayList<>());
-	    }
-        return analysis;
-    }
+		Element progressElement = parseXml(line);
+		String analysis = progressElement.getAttribute("top");
+		analysisToProps.putIfAbsent(analysis, new ArrayList<>());
+		return analysis;
+	}
 
-    private Element parseXml(String xml) {
+	private Element parseXml(String xml) {
 		try {
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			StringReader stringReader = new StringReader(xml);
@@ -134,8 +132,8 @@ public class XmlParseThread extends Thread {
 		String source = progressElement.getAttribute("source");
 		if ("bmc".equals(source)) {
 			int k = Integer.parseInt(progressElement.getTextContent());
-			for(PropertyResult pr : analysisToProps.get(analysis)){
-			        pr.setBaseProgress(k);
+			for (PropertyResult pr : analysisToProps.get(analysis)) {
+				pr.setBaseProgress(k);
 			}
 		}
 	}
@@ -161,7 +159,7 @@ public class XmlParseThread extends Thread {
 		PropertyResult pr = getOrAddProperty(analysis, propName);
         if (pr != null) {
             pr.setProperty(prop);
-            if(analysis != null){
+            if (analysis != null) {
                 analysisToProps.get(analysis).add(pr);
             }
         }
@@ -169,13 +167,13 @@ public class XmlParseThread extends Thread {
 
     private PropertyResult getOrAddProperty(String analysis, String propName) {
         PropertyResult pr = result.getPropertyResult(propName);
-		if(pr == null && analysis != null){
+        if (pr == null && analysis != null) {
             propName = analysis + propName;
             pr = result.getPropertyResult(propName);
         }
-		if (pr == null) {
-			pr = result.addProperty(propName);
-		}
+        if (pr == null) {
+            pr = result.addProperty(propName);
+        }
         return pr;
     }
 
@@ -186,13 +184,14 @@ public class XmlParseThread extends Thread {
 		int k = getK(getElement(propertyElement, "K"));
 		String answer = getAnswer(getElement(propertyElement, "Answer"));
 		String source = getSource(getElement(propertyElement, "Answer"));
-		List<String> invariants = getInvariants(getElements(propertyElement, "Invariant"));
+		List<String> invariants = getStringList(getElements(propertyElement, "Invariant"));
+		List<String> support = getStringList(getElements(propertyElement, "Support"));
 		List<String> conflicts = getConflicts(getElement(propertyElement, "Conflicts"));
 		Counterexample cex = getCounterexample(getElement(propertyElement, "Counterexample"), k);
 
 		switch (answer) {
 		case "valid":
-			return new ValidProperty(name, source, k, runtime, invariants);
+			return new ValidProperty(name, source, k, runtime, invariants, support);
 
 		case "falsifiable":
 			return new InvalidProperty(name, source, cex, conflicts, runtime);
@@ -234,19 +233,19 @@ public class XmlParseThread extends Thread {
 		return answerNode.getAttribute("source");
 	}
 
-	private List<String> getInvariants(List<Element> invariantElements) {
-		List<String> invariants = new ArrayList<>();
-		for (Element invariantElement : invariantElements) {
-			invariants.add(invariantElement.getTextContent());
+	private List<String> getStringList(List<Element> elements) {
+		List<String> result = new ArrayList<>();
+		for (Element e : elements) {
+			result.add(e.getTextContent());
 		}
-		return invariants;
+		return result;
 	}
 
 	private List<String> getConflicts(Element conflictsElement) {
 		if (conflictsElement == null) {
 			return Collections.emptyList();
 		}
-		
+
 		List<String> conflicts = new ArrayList<>();
 		for (Element conflictElement : getElements(conflictsElement, "Conflict")) {
 			conflicts.add(conflictElement.getTextContent());

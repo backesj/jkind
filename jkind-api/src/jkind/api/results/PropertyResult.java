@@ -1,5 +1,6 @@
 package jkind.api.results;
 
+import jkind.JKindException;
 import jkind.results.InvalidProperty;
 import jkind.results.Property;
 import jkind.results.UnknownProperty;
@@ -52,11 +53,14 @@ public class PropertyResult extends AnalysisResult {
 		}
 
 		if (property instanceof ValidProperty) {
-		    if(invalidInPast){
-		        setStatus(Status.VALID_REFINED);
-		    }else{
-		        setStatus(invertStatus ? Status.INVALID : Status.VALID);
-		    }
+			if (invalidInPast) {
+				if (invertStatus) {
+					throw new JKindException("Refinement not supported for inverted property");
+				}
+				setStatus(Status.VALID_REFINED);
+			} else {
+				setStatus(invertStatus ? Status.INVALID : Status.VALID);
+			}
 		} else if (property instanceof InvalidProperty) {
 			setStatus(invertStatus ? Status.VALID : Status.INVALID);
 		} else if (property instanceof UnknownProperty) {
@@ -93,9 +97,9 @@ public class PropertyResult extends AnalysisResult {
 	}
 
 	private void setStatus(Status status) {
-	    if(this.status == Status.INVALID){
-	        invalidInPast = true;
-	    }
+		if (this.status == Status.INVALID) {
+			invalidInPast = true;
+		}
 		pcs.firePropertyChange("status", this.status, this.status = status);
 	}
 

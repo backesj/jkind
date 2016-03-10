@@ -21,7 +21,7 @@ public enum Status {
 		case WAITING:
 			return "Waiting";
 		case VALID_REFINED:
-		    return "Valid_Refined";
+		    return "Valid (refined)";
 		default:
 			return "";
 		}

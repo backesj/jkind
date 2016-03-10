@@ -153,13 +153,11 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 		newline();
 		write(");");
 		newline();
-		
-		if(node.contracts.isPresent()){
-			for(Contract contract : node.contracts.get()){
-				contract.accept(this);
-			}
+
+		if (node.contract != null) {
+			node.contract.accept(this);
 		}
-		
+
 		if (!node.locals.isEmpty()) {
 			write("var");
 			newline();
@@ -193,10 +191,18 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 			}
 			newline();
 		}
-		
-		if (node.realizabilityInputs.isPresent()) {
+
+		if (node.realizabilityInputs != null) {
 			write("  --%REALIZABLE ");
-			write(node.realizabilityInputs.get().stream().collect(joining(", ")));
+			write(node.realizabilityInputs.stream().collect(joining(", ")));
+			write(";");
+			newline();
+			newline();
+		}
+
+		if (!node.support.isEmpty()) {
+			write("  --%SUPPORT ");
+			write(node.support.stream().collect(joining(", ")));
 			write(";");
 			newline();
 			newline();
@@ -466,15 +472,15 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 
 	@Override
 	public Void visit(Contract contract) {
-		//write("--@contract : "+contract.name+";");
 		newline();
-		for(Expr expr : contract.requires){
+		for (Expr expr : contract.requires) {
 			write("--@assume ");
 			expr(expr);
 			write(";");
 			newline();
 		}
-		for(Expr expr : contract.ensures){
+
+		for (Expr expr : contract.ensures) {
 			write("--@guarantee ");
 			expr(expr);
 			write(";");
