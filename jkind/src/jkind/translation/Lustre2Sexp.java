@@ -3,6 +3,7 @@ package jkind.translation;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +35,7 @@ import jkind.lustre.visitors.ExprVisitor;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
+import jkind.util.LinkedBiMap;
 import jkind.util.SexpUtil;
 import jkind.util.StreamIndex;
 import jkind.util.Util;
@@ -50,13 +52,29 @@ public class Lustre2Sexp implements ExprVisitor<Sexp> {
 	}
 
 	public static Relation constructTransitionRelation(Node node) {
+		return constructGeneralTransitionRelation(node, Collections.emptyList());
+	}
+
+	public static Relation constructSupportTransitionRelation(Node node) {
+		return constructGeneralTransitionRelation(node, node.support);
+	}
+
+	private static Relation constructGeneralTransitionRelation(Node node, List<String> support) {
 		Lustre2Sexp visitor = new Lustre2Sexp(1);
 		List<Sexp> conjuncts = new ArrayList<>();
-		
+
+		LinkedBiMap<String, Symbol> supportMap = createSupportMap(support);
+
 		for (Equation eq : node.equations) {
 			Sexp body = eq.expr.accept(visitor);
 			Sexp head = eq.lhs.get(0).accept(visitor);
-			conjuncts.add(new Cons("=", head, body));
+			Sexp sexp = new Cons("=", head, body);
+			
+			String id = eq.lhs.get(0).id;
+			if (supportMap.containsKey(id)) {
+				sexp = new Cons("=>", supportMap.get(id), sexp);
+			}
+			conjuncts.add(sexp);
 		}
 
 		for (Expr assertion : node.assertions) {
@@ -67,10 +85,18 @@ public class Lustre2Sexp implements ExprVisitor<Sexp> {
 		inputs.add(new VarDecl(INIT.str, NamedType.BOOL));
 		inputs.addAll(visitor.pre(Util.getVarDecls(node)));
 		inputs.addAll(visitor.curr(Util.getVarDecls(node)));
-
 		return new Relation(Relation.T, inputs, SexpUtil.conjoin(conjuncts));
 	}
 
+	public static LinkedBiMap<String, Symbol> createSupportMap(List<String> support) {
+		LinkedBiMap<String, Symbol> supportMap = new LinkedBiMap<>();
+		int id = 0;
+		for (String s : support) {
+			supportMap.put(s, new Symbol("sup" + id++));
+		}
+		return supportMap;
+	}
+	
 	private Symbol curr(String id) {
 		return new StreamIndex(id, index).getEncoded();
 	}

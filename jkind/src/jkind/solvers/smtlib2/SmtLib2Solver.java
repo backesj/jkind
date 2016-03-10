@@ -33,14 +33,10 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 
 public abstract class SmtLib2Solver extends ProcessBasedSolver {
-	protected final String name;
     private final Set<String> definedTypes = new HashSet<>();
     private final Set<String> typeConstructors = new HashSet<>();
-
-
-	public SmtLib2Solver(String scratchBase, ProcessBuilder pb, String name) {
-		super(scratchBase, pb);
-		this.name = name;
+	public SmtLib2Solver(String scratchBase) {
+		super(scratchBase);
 	}
 
 	@Override
@@ -59,7 +55,7 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 			toSolver.newLine();
 			toSolver.flush();
 		} catch (IOException e) {
-			throw new JKindException("Unable to write to " + name + ", "
+			throw new JKindException("Unable to write to " + getSolverName() + ", "
 					+ "probably due to internal JKind error", e);
 		}
 	}
@@ -138,11 +134,9 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 
 		assertSexp(new Cons("not", sexp));
 		send("(check-sat)");
-		send("(echo \"" + DONE + "\")");
 		String status = readFromSolver();
 		if (isSat(status)) {
 			send("(get-model)");
-			send("(echo \"" + DONE + "\")");
 			result = new SatResult(parseModel(readFromSolver()));
 		} else if (isUnsat(status)) {
 			result = new UnsatResult();
@@ -155,6 +149,31 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		return result;
 	}
 
+	@Override
+	protected Result quickCheckSat(List<Symbol> activationLiterals) {
+		push();
+		for (Symbol actLit : activationLiterals) {
+			String name = "_" + actLit.str;
+			assertSexp(new Cons("!", actLit, new Symbol(":named"), new Symbol(name)));
+		}
+
+		send("(check-sat)");
+		String status = readFromSolver();
+		Result result;
+		if (isSat(status)) {
+			result = new SatResult();
+		} else if (isUnsat(status)) {
+			result = new UnsatResult(getUnsatCore(activationLiterals));
+		} else {
+			result = new UnknownResult();
+		}
+		
+		pop();
+		return result;
+	}
+
+	protected abstract List<Symbol> getUnsatCore(List<Symbol> activationLiterals);
+
 	protected boolean isSat(String output) {
 		return output.trim().equals("sat");
 	}
@@ -162,16 +181,18 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 	protected boolean isUnsat(String output) {
 		return output.trim().equals("unsat");
 	}
-
+	
 	protected String readFromSolver() {
+		send("(echo \"" + DONE + "\")");
+
 		try {
 			String line;
 			StringBuilder content = new StringBuilder();
 			while (true) {
 				line = fromSolver.readLine();
-				comment(name + ": " + line);
+				comment(getSolverName() + ": " + line);
 				if (line == null) {
-					throw new JKindException(name + " terminated unexpectedly");
+					throw new JKindException(getSolverName() + " terminated unexpectedly");
 				} else if (line.contains("define-fun " + Relation.T + " ")) {
 					// No need to parse the transition relation
 				} else if (isDone(line)) {
@@ -183,15 +204,18 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 				    //TODO: this will break if the error message changes
 				    String typeName = line.substring(21, endIndex);
 				    throw new JKindException("Type '"+typeName+"' is not well-founded");
+				} else if (line.contains(" |-> ")) {
+					// Ignore Z3 optimization information
 				} else if (line.contains("error \"") || line.contains("Error:")) {
 					// Flush the output since errors span multiple lines
 					while ((line = fromSolver.readLine()) != null) {
-						comment(name + ": " + line);
+						comment(getSolverName() + ": " + line);
 						if (isDone(line)) {
 							break;
 						}
 					}
-					throw new JKindException(name + " error (see scratch file for details)");
+					throw new JKindException(getSolverName()
+							+ " error (see scratch file for details)");
 				} else {
 					content.append(line);
 					content.append("\n");
@@ -200,9 +224,9 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 
 			return content.toString();
 		} catch (RecognitionException e) {
-			throw new JKindException("Error parsing " + name + " output", e);
+			throw new JKindException("Error parsing " + getSolverName() + " output", e);
 		} catch (IOException e) {
-			throw new JKindException("Unable to read from " + name, e);
+			throw new JKindException("Unable to read from " + getSolverName(), e);
 		}
 	}
 
@@ -220,9 +244,8 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		ModelContext ctx = parser.model();
 
 		if (parser.getNumberOfSyntaxErrors() > 0) {
-			throw new JKindException("Error parsing " + name + " output: " + string);
-		} 
-
+			throw new JKindException("Error parsing " + getSolverName() + " output: " + string);
+		}
 		return ModelExtractor.getModel(ctx, varTypes, typeConstructors);
 	}
 

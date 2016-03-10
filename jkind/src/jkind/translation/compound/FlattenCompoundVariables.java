@@ -48,9 +48,10 @@ public class FlattenCompoundVariables extends AstMapVisitor {
 		builder.clearOutputs().addOutputs(flattenVarDecls(node.outputs));
 		builder.clearLocals().addLocals(flattenVarDecls(node.locals));
 		builder.clearEquations().addEquations(flattenLeftHandSide(node.equations));
-		if (node.realizabilityInputs.isPresent()) {
-			builder.setRealizabilityInputs(flattenNames(node.realizabilityInputs.get()));
+		if (node.realizabilityInputs != null) {
+			builder.setRealizabilityInputs(flattenNames(node.realizabilityInputs));
 		}
+		builder.clearSupport().addSupports(flattenNames(node.support));
 
 		Map<String, Expr> map = createExpandedVariables(Util.getVarDecls(node));
 		return new SubstitutionVisitor(map).visit(builder.build());

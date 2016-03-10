@@ -8,6 +8,7 @@ import jkind.lustre.Program;
 import jkind.slicing.DependencyMap;
 import jkind.slicing.LustreSlicer;
 import jkind.translation.InductiveDataTypeSpecification;
+import jkind.translation.InlineSimpleEquations;
 import jkind.translation.Specification;
 import jkind.translation.Translate;
 import jkind.util.Util;
@@ -26,24 +27,34 @@ public class JKind {
 				}
 			}
 
-//			Node main = Translate.translate(program);
 			program = Translate.translateProgram(program);
 			Node main = program.getMainNode();
 			DependencyMap dependencyMap = new DependencyMap(main, main.properties);
 			main = LustreSlicer.slice(main, dependencyMap);
 			//kind of hacky, but we need a way for the specification to contain
 			//recursive functions if they are defined
-			Specification spec;
+			Specification userSpec;
             if (Util.containsInductDataTypes(program)) {
-                spec = new InductiveDataTypeSpecification(main, dependencyMap, program);
+                userSpec = new InductiveDataTypeSpecification(main, program);
             } else {
-                spec = new Specification(main, dependencyMap);
+                userSpec = new Specification(main);
             }
-			new Director(settings, spec).run();
+            Specification analysisSpec = getAnalysisSpec(userSpec, settings);
+			new Director(settings, userSpec, analysisSpec).run();
+
 			System.exit(0); // Kills all threads
 		} catch (Throwable t) {
 			t.printStackTrace();
 			System.exit(ExitCodes.UNCAUGHT_EXCEPTION);
+		}
+	}
+
+	private static Specification getAnalysisSpec(Specification userSpec, JKindSettings settings) {
+		if (settings.inline) {
+			Node inlined = InlineSimpleEquations.node(userSpec.node);
+			return new Specification(inlined);
+		} else {
+			return userSpec;
 		}
 	}
 }

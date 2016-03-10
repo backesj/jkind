@@ -24,7 +24,7 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
     private AtomicBoolean running = new AtomicBoolean(false);
     
     public Cvc4SolverThread(String scratchBase, ProcessBuilder processBuilder, BlockingQueue<MultiSolverResult> outgoing) {
-        super(scratchBase, processBuilder);
+        super(scratchBase);
         this.outgoing = outgoing;
     }
 
@@ -152,7 +152,7 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
             while (true) {
             
                 line = nonBlockingReadLine();
-                comment(name + ": " + line);
+                comment(getSolverName()+ ": " + line);
                 if (line == null) {
                     return null;
                 } else if (line.contains("define-fun " + Relation.T + " ")) {
@@ -169,12 +169,12 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
                 } else if (line.contains("error \"") || line.contains("Error:")) {
                     // Flush the output since errors span multiple lines
                     while ((line = nonBlockingReadLine()) != null) {
-                        comment(name + ": " + line);
+                        comment(getSolverName() + ": " + line);
                         if (isDone(line)) {
                             break;
                         }
                     }
-                    throw new JKindException(name + " error (see scratch file for details)");
+                    throw new JKindException(getSolverName() + " error (see scratch file for details)");
                 } else {
                     content.append(line);
                     content.append("\n");
@@ -183,7 +183,7 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
 
             return content.toString();
         } catch (RecognitionException e) {
-            throw new JKindException("Error parsing " + name + " output", e);
+            throw new JKindException("Error parsing " + getSolverName() + " output", e);
         }
     }
     

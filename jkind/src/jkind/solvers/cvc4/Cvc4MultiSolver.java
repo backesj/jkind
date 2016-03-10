@@ -13,6 +13,7 @@ import jkind.JKindException;
 import jkind.lustre.InductType;
 import jkind.lustre.VarDecl;
 import jkind.sexp.Sexp;
+import jkind.sexp.Symbol;
 import jkind.solvers.Result;
 import jkind.solvers.SatResult;
 import jkind.solvers.Solver;
@@ -282,5 +283,10 @@ public class Cvc4MultiSolver extends Solver {
         definedInductTypes.add(type);
         satSolver.define(type);
         unsatSolver.define(type);
+    }
+
+    @Override
+    protected Result quickCheckSat(List<Symbol> activationLiterals) {
+       throw new JKindException("This method is unsupported for this solver type");
     }
 }

@@ -22,7 +22,7 @@ public class JKindApi extends KindApi {
 	protected boolean invariantGeneration = true;
 	protected Integer pdrMax = null;
 	protected boolean inductiveCounterexamples = false;
-	protected boolean reduceInvariants = false;
+	protected boolean reduceSupport = false;
 	protected boolean smoothCounterexamples = false;
 	protected boolean intervalGeneralization = false;
 
@@ -81,10 +81,10 @@ public class JKindApi extends KindApi {
 	}
 
 	/**
-	 * Reduce and report the invariants used for a valid property
+	 * Reduce and report the invariants and support used for a valid property
 	 */
-	public void setReduceInvariants() {
-		reduceInvariants = true;
+	public void setReduceSupport() {
+		reduceSupport = true;
 	}
 
 	/**
@@ -115,7 +115,8 @@ public class JKindApi extends KindApi {
 	 */
 	@Override
 	public void execute(File lustreFile, JKindResult result, IProgressMonitor monitor) {
-		ApiUtil.execute(this::getJKindProcessBuilder, lustreFile, result, monitor);
+		debug.println("Lustre file", lustreFile);
+		ApiUtil.execute(this::getJKindProcessBuilder, lustreFile, result, monitor, debug);
 	}
 
 	private ProcessBuilder getJKindProcessBuilder(File lustreFile) {
@@ -146,8 +147,8 @@ public class JKindApi extends KindApi {
 		if (inductiveCounterexamples) {
 			args.add("-induct_cex");
 		}
-		if (reduceInvariants) {
-			args.add("-reduce_inv");
+		if (reduceSupport) {
+			args.add("-support");
 		}
 		if (smoothCounterexamples) {
 			args.add("-smooth");
@@ -172,7 +173,7 @@ public class JKindApi extends KindApi {
 	}
 
 	@Override
-	public void checkAvailable() throws Exception {
+	public String checkAvailable() throws Exception {
 		List<String> args = new ArrayList<>();
 		args.addAll(Arrays.asList(getJKindCommand()));
 		args.add("-version");
@@ -185,5 +186,6 @@ public class JKindApi extends KindApi {
 		if (process.exitValue() != 0) {
 			throw new JKindException("Error running JKind: " + output);
 		}
+		return output;
 	}
 }

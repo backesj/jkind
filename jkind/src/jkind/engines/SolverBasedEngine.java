@@ -6,13 +6,10 @@ import java.util.List;
 import jkind.JKindException;
 import jkind.JKindSettings;
 import jkind.SolverOption;
-import jkind.analysis.LinearChecker;
-import jkind.analysis.YicesArithOnlyCheck;
 import jkind.lustre.Expr;
 import jkind.lustre.InductType;
 import jkind.lustre.LustreUtil;
 import jkind.lustre.NamedType;
-import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
 import jkind.lustre.values.BooleanValue;
 import jkind.sexp.Cons;
@@ -24,12 +21,6 @@ import jkind.solvers.SatResult;
 import jkind.solvers.Solver;
 import jkind.solvers.UnknownResult;
 import jkind.solvers.cvc4.Cvc4MultiSolver;
-import jkind.solvers.cvc4.Cvc4Solver;
-import jkind.solvers.mathsat.MathSatSolver;
-import jkind.solvers.smtinterpol.SmtInterpolSolver;
-import jkind.solvers.yices.YicesSolver;
-import jkind.solvers.yices2.Yices2Solver;
-import jkind.solvers.z3.Z3Solver;
 import jkind.translation.InductiveDataTypeSpecification;
 import jkind.translation.Lustre2Sexp;
 import jkind.translation.Specification;
@@ -59,7 +50,6 @@ public abstract class SolverBasedEngine extends Engine {
 
 	protected void initializeSolver() {
 		solver = getSolver();
-		
 		boolean containsInductiveDataTypes = (spec instanceof InductiveDataTypeSpecification);
 		boolean containsRecursiveFunctions = false;
 		if(containsInductiveDataTypes){
@@ -80,28 +70,15 @@ public abstract class SolverBasedEngine extends Engine {
 				solver.define(type);
 			}
 		}
-		solver.define(spec.transitionRelation);
+
+		solver.define(spec.getTransitionRelation());
 		solver.define(new VarDecl(INIT.str, NamedType.BOOL));
 		
 	}
 
-	private Solver getSolver() {
-		String scratchBase = getScratchBase();
-		switch (settings.solver) {
-		case YICES:
-			return new YicesSolver(scratchBase, YicesArithOnlyCheck.check(spec.node));
-		case CVC4:
-			return new Cvc4MultiSolver(scratchBase);
-		case Z3:
-			return new Z3Solver(scratchBase, LinearChecker.isLinear(spec.node));
-		case YICES2:
-			return new Yices2Solver(scratchBase);
-		case MATHSAT:
-			return new MathSatSolver(scratchBase);
-		case SMTINTERPOL:
-			return new SmtInterpolSolver(scratchBase);
-		}
-		throw new IllegalArgumentException("Unknown solver: " + settings.solver);
+
+	protected Solver getSolver() {
+		return SolverUtil.getSolver(settings.solver, getScratchBase(), spec.node);
 	}
 
 	/** Utility */
@@ -132,26 +109,30 @@ public abstract class SolverBasedEngine extends Engine {
 		return result;
 	}
 
-	protected void assertBaseTransition(int k) {
-		assertTransition(k, k == 0);
-	}
-
 	protected static final Symbol INIT = Lustre2Sexp.INIT;
 
+	protected void assertBaseTransition(int k) {
+		solver.assertSexp(getBaseTransition(k));
+	}
+
 	protected void assertInductiveTransition(int k) {
+		solver.assertSexp(getInductiveTransition(k));
+	}
+
+	protected Sexp getBaseTransition(int k) {
+		return getTransition(k, k == 0);
+	}
+
+	protected Sexp getInductiveTransition(int k) {
 		if (k == 0) {
-			assertTransition(0, INIT);
+			return getTransition(0, INIT);
 		} else {
-			assertTransition(k, false);
+			return getTransition(k, false);
 		}
 	}
 
-	protected void assertTransition(int k, boolean init) {
-		assertTransition(k, Sexp.fromBoolean(init));
-	}
-
-	protected void assertTransition(int k, Sexp init) {
-		solver.assertSexp(getTransition(k, init));
+	protected Sexp getTransition(int k, boolean init) {
+		return getTransition(k, Sexp.fromBoolean(init));
 	}
 
 	protected Sexp getTransition(int k, Sexp init) {
@@ -159,7 +140,7 @@ public abstract class SolverBasedEngine extends Engine {
 		args.add(init);
 		args.addAll(getSymbols(getOffsetVarDecls(k - 1)));
 		args.addAll(getSymbols(getOffsetVarDecls(k)));
-		return new Cons(spec.transitionRelation.getName(), args);
+		return new Cons(spec.getTransitionRelation().getName(), args);
 	}
 
 	protected List<Sexp> getSymbols(List<VarDecl> varDecls) {

@@ -1,5 +1,6 @@
 package jkind.solvers.smtinterpol;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -10,6 +11,7 @@ import jkind.lustre.VarDecl;
 import jkind.lustre.values.Value;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
+import jkind.sexp.Symbol;
 import jkind.solvers.Model;
 import jkind.solvers.Result;
 import jkind.solvers.SatResult;
@@ -19,6 +21,7 @@ import jkind.solvers.UnknownResult;
 import jkind.solvers.UnsatResult;
 import jkind.translation.Relation;
 import jkind.translation.Specification;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -35,6 +38,7 @@ public class SmtInterpolSolver extends Solver {
 
 	@Override
 	public void initialize(Specification spec) {
+		script.setOption(":produce-unsat-cores", true);
 		script.setLogic(Logics.QF_UFLIRA);
 		script.setOption(":verbosity", 2);
 	}
@@ -91,6 +95,36 @@ public class SmtInterpolSolver extends Solver {
 		throw new JKindException("Unhandled result from solver");
 	}
 
+	@Override
+	protected Result quickCheckSat(List<Symbol> activationLiterals) {
+		push();
+
+		for (Symbol actLit : activationLiterals) {
+			String name = "_" + actLit.str;
+			script.assertTerm(script.annotate(convert(actLit), new Annotation(":named", name)));
+		}
+
+		switch (script.checkSat()) {
+		case SAT:
+			pop();
+			return new SatResult();
+
+		case UNSAT:
+			List<Symbol> unsatCore = new ArrayList<>();
+			for (Term t : script.getUnsatCore()) {
+				unsatCore.add(new Symbol(t.toString().substring(1)));
+			}
+			pop();
+			return new UnsatResult(unsatCore);
+
+		case UNKNOWN:
+			pop();
+			return new UnknownResult();
+		}
+
+		throw new JKindException("Unhandled result from solver");
+	}
+
 	private Model extractModel(de.uni_freiburg.informatik.ultimate.logic.Model model) {
 		SimpleModel result = new SimpleModel();
 		for (Entry<String, Type> entry : varTypes.entrySet()) {
@@ -98,7 +132,7 @@ public class SmtInterpolSolver extends Solver {
 			Type type = entry.getValue();
 			Term evaluated = model.evaluate(script.term(name));
 			Value value = SmtInterpolUtil.getValue(evaluated, type);
-			result.addValue(name, value);
+			result.putValue(name, value);
 		}
 		return result;
 	}

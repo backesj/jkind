@@ -31,15 +31,14 @@ import jkind.engines.messages.UnknownMessage;
 import jkind.engines.messages.ValidMessage;
 import jkind.engines.pdr.PdrEngine;
 import jkind.lustre.Expr;
-import jkind.lustre.InductType;
-import jkind.lustre.Type;
 import jkind.results.Counterexample;
 import jkind.results.layout.NodeLayout;
 import jkind.slicing.ModelSlicer;
-import jkind.solvers.Model;
 import jkind.translation.InductiveDataTypeSpecification;
+import jkind.solvers.SimpleModel;
 import jkind.translation.Specification;
 import jkind.util.CounterexampleExtractor;
+import jkind.util.ModelReconstructionEvaluator;
 import jkind.util.Util;
 import jkind.writers.ConsoleWriter;
 import jkind.writers.ExcelWriter;
@@ -50,7 +49,8 @@ public class Director extends MessageHandler {
 	public static final String NAME = "director";
 
 	private final JKindSettings settings;
-	private final Specification spec;
+	private final Specification userSpec;
+	private final Specification analysisSpec;
 	private final Writer writer;
 	private final long startTime;
 
@@ -66,13 +66,14 @@ public class Director extends MessageHandler {
 	private Advice inputAdvice;
 	private AdviceWriter adviceWriter;
 
-	public Director(JKindSettings settings, Specification spec) {
+	public Director(JKindSettings settings, Specification userSpec, Specification analysisSpec) {
 		this.settings = settings;
-		this.spec = spec;
+		this.userSpec = userSpec;
+		this.analysisSpec = analysisSpec;
 
 		this.writer = getWriter();
 		this.startTime = System.currentTimeMillis();
-		this.remainingProperties.addAll(spec.node.properties);
+		this.remainingProperties.addAll(analysisSpec.node.properties);
 
 		if (settings.readAdvice != null) {
 			this.inputAdvice = AdviceReader.read(settings.readAdvice);
@@ -80,20 +81,21 @@ public class Director extends MessageHandler {
 
 		if (settings.writeAdvice != null) {
 			this.adviceWriter = new AdviceWriter(settings.writeAdvice);
-			this.adviceWriter.addVarDecls(Util.getVarDecls(spec.node));
+			this.adviceWriter.addVarDecls(Util.getVarDecls(analysisSpec.node));
 		}
 
-		initializeUnknowns(settings, spec.node.properties);
+		initializeUnknowns(settings, analysisSpec.node.properties);
 	}
 
 	private final Writer getWriter() {
 		try {
 			if (settings.excel) {
-				return new ExcelWriter(settings.filename + ".xls", spec.node);
+				return new ExcelWriter(settings.filename + ".xls", userSpec.node);
 			} else if (settings.xml) {
-				return new XmlWriter(settings.filename + ".xml", spec.typeMap, settings.xmlToStdout);
+				return new XmlWriter(settings.filename + ".xml", userSpec.typeMap,
+						settings.xmlToStdout);
 			} else {
-				return new ConsoleWriter(new NodeLayout(spec.node));
+				return new ConsoleWriter(new NodeLayout(userSpec.node));
 			}
 		} catch (IOException e) {
 			throw new JKindException("Unable to open output file", e);
@@ -156,11 +158,11 @@ public class Director extends MessageHandler {
 		
 		//if the specification contains inductive datatypes we are
 		//very limited about what engines we can run
-		boolean containsInductDataTypes = spec instanceof InductiveDataTypeSpecification;
+		boolean containsInductDataTypes = analysisSpec instanceof InductiveDataTypeSpecification;
 		boolean containsQuantifiers = false;
 		
 		if(containsInductDataTypes){
-			containsQuantifiers = ((InductiveDataTypeSpecification)spec).containsQuantsOrRecFuns();
+			containsQuantifiers = ((InductiveDataTypeSpecification)analysisSpec).containsQuantsOrRecFuns();
 		}
 		
 		if(containsInductDataTypes){
@@ -192,42 +194,43 @@ public class Director extends MessageHandler {
 		
 		if (settings.boundedModelChecking) {
 			if(containsQuantifiers){
-				addEngine(new QuantifiedBmcEngine((InductiveDataTypeSpecification) spec, settings, this));
+				addEngine(new QuantifiedBmcEngine((InductiveDataTypeSpecification) analysisSpec, settings, this));
 			}else{
-				addEngine(new BmcEngine(spec, settings, this));
+				addEngine(new BmcEngine(analysisSpec, settings, this));
 			}
 		}
 
 		if (settings.kInduction) {
 			if (containsQuantifiers) {
-				addEngine(new QuantifiedKInductionEngine((InductiveDataTypeSpecification) spec, settings, this));
+				addEngine(new QuantifiedKInductionEngine((InductiveDataTypeSpecification) analysisSpec, settings, this));
 			} else {
-				addEngine(new KInductionEngine(spec, settings, this));
+				addEngine(new KInductionEngine(analysisSpec, settings, this));
 			}
 		}
 
 		if (settings.invariantGeneration && !containsInductDataTypes) {
-			addEngine(new GraphInvariantGenerationEngine(spec, settings, this));
+			addEngine(new GraphInvariantGenerationEngine(analysisSpec, settings, this));
+
 		}
 
-		if (settings.reduceInvariants) {
-			addEngine(new InvariantReductionEngine(spec, settings, this));
+		if (settings.reduceSupport) {
+			addEngine(new ReduceSupportEngine(analysisSpec, settings, this));
 		}
 
 		if (settings.smoothCounterexamples && !containsInductDataTypes) {
-			addEngine(new SmoothingEngine(spec, settings, this));
+			addEngine(new SmoothingEngine(analysisSpec, settings, this));
 		}
 
 		if (settings.intervalGeneralization && !containsInductDataTypes) {
-			addEngine(new IntervalGeneralizationEngine(spec, settings, this));
+			addEngine(new IntervalGeneralizationEngine(analysisSpec, settings, this));
 		}
 
 		if (settings.pdrMax > 0 && !containsInductDataTypes) {
-			addEngine(new PdrEngine(spec, settings, this));
+			addEngine(new PdrEngine(analysisSpec, settings, this));
 		}
 
 		if (settings.readAdvice != null && !containsInductDataTypes) {
-			addEngine(new AdviceEngine(spec, settings, this, inputAdvice));
+			addEngine(new AdviceEngine(analysisSpec, settings, this, inputAdvice));
 		}
 	}
 
@@ -320,8 +323,8 @@ public class Director extends MessageHandler {
 			adviceWriter.addInvariants(vm.invariants);
 		}
 
-		List<Expr> invariants = settings.reduceInvariants ? vm.invariants : Collections.emptyList();
-		writer.writeValid(newValid, vm.source, vm.k, getRuntime(), invariants);
+		List<Expr> invariants = settings.reduceSupport ? vm.invariants : Collections.emptyList();
+		writer.writeValid(newValid, vm.source, vm.k, getRuntime(), invariants, vm.support);
 	}
 
 	private List<String> intersect(List<String> list1, List<String> list2) {
@@ -348,8 +351,9 @@ public class Director extends MessageHandler {
 
 		double runtime = getRuntime();
 		for (String invalidProp : newInvalid) {
-			Model slicedModel = ModelSlicer.slice(im.model, spec.dependencyMap.get(invalidProp));
-			Counterexample cex = extractCounterexample(im.length, slicedModel);
+			SimpleModel slicedModel = ModelSlicer.slice(im.model,
+					analysisSpec.dependencyMap.get(invalidProp));
+			Counterexample cex = extractCounterexample(invalidProp, im.length, slicedModel, true);
 			writer.writeInvalid(invalidProp, im.source, cex, Collections.emptyList(), runtime);
 		}
 	}
@@ -386,9 +390,9 @@ public class Director extends MessageHandler {
 		if (um.source.equals(NAME)) {
 			return;
 		}
-		
+
 		markUnknowns(um);
-		
+
 		Map<Integer, List<String>> completed = getCompletelyUnknownByBaseStep(um);
 		for (Entry<Integer, List<String>> entry : completed.entrySet()) {
 			int baseStep = entry.getKey();
@@ -442,8 +446,8 @@ public class Director extends MessageHandler {
 
 	public Itinerary getValidMessageItinerary() {
 		List<EngineType> destinations = new ArrayList<>();
-		if (settings.reduceInvariants) {
-			destinations.add(EngineType.INVARIANT_REDUCTION);
+		if (settings.reduceSupport) {
+			destinations.add(EngineType.REDUCE_SUPPORT);
 		}
 		return new Itinerary(destinations);
 	}
@@ -477,8 +481,8 @@ public class Director extends MessageHandler {
 				Output.println("INVALID PROPERTIES: " + invalidProperties);
 				Output.println();
 			}
-			
-			List<String> unknownProperties = new ArrayList<>(spec.node.properties);
+
+			List<String> unknownProperties = new ArrayList<>(analysisSpec.node.properties);
 			unknownProperties.removeAll(validProperties);
 			unknownProperties.removeAll(invalidProperties);
 			if (!unknownProperties.isEmpty()) {
@@ -493,14 +497,19 @@ public class Director extends MessageHandler {
 
 		for (String prop : inductiveCounterexamples.keySet()) {
 			InductiveCounterexampleMessage icm = inductiveCounterexamples.get(prop);
-			Model slicedModel = ModelSlicer.slice(icm.model, spec.dependencyMap.get(prop));
-			result.put(prop, extractCounterexample(icm.length, slicedModel));
+			SimpleModel slicedModel = ModelSlicer.slice(icm.model,
+					analysisSpec.dependencyMap.get(prop));
+			result.put(prop, extractCounterexample(prop, icm.length, slicedModel, false));
 		}
 
 		return result;
 	}
 
-	private Counterexample extractCounterexample(int k, Model model) {
-		return new CounterexampleExtractor(spec.typeMap).extractCounterexample(k, model);
+	private Counterexample extractCounterexample(String property, int k, SimpleModel model,
+			boolean concrete) {
+		if (settings.inline) {
+			ModelReconstructionEvaluator.reconstruct(userSpec, model, property, k, concrete);
+		}
+		return CounterexampleExtractor.extract(userSpec, k, model);
 	}
 }

@@ -25,8 +25,8 @@ public class InductiveDataTypeSpecification extends Specification{
     public final List<InductType> inductTypes;
     public final Map<String, Expr> propertyExprs = new HashMap<>();
     
-    public InductiveDataTypeSpecification(Node node, DependencyMap dependencyMap, Program program) {
-        super(removeQuantifedProps(node), dependencyMap);
+    public InductiveDataTypeSpecification(Node node, Program program) {
+        super(removeQuantifedProps(node));
         this.functions = RecursiveFunction2Sexp.constructRecursiveFunctions(program.recFuns);
         List<InductType> inductTypes = new ArrayList<>();
         for(TypeDef def : program.types){
@@ -53,7 +53,7 @@ public class InductiveDataTypeSpecification extends Specification{
 			}
 		}
 		return new Node(node.location, node.id, node.inputs, node.outputs, node.locals, 
-    			newEqs, node.properties, node.assertions, node.realizabilityInputs, node.contracts);
+    			newEqs, node.properties, node.assertions, node.realizabilityInputs, node.contract, node.support);
     }
 
 	private void setPropertyExprs(Node node) {

@@ -1,21 +1,12 @@
 package jkind.solvers.z3;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
-import jkind.JKindException;
-import jkind.lustre.InductType;
-import jkind.lustre.InductTypeElement;
-import jkind.lustre.NamedType;
-import jkind.lustre.TypeConstructor;
-import jkind.lustre.VarDecl;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
+import jkind.solvers.MaxSatSolver;
 import jkind.solvers.Result;
 import jkind.solvers.SatResult;
 import jkind.solvers.UnknownResult;
@@ -23,57 +14,59 @@ import jkind.solvers.UnsatResult;
 import jkind.solvers.smtlib2.SmtLib2Solver;
 import jkind.translation.Specification;
 
-public class Z3Solver extends SmtLib2Solver {
+public class Z3Solver extends SmtLib2Solver implements MaxSatSolver {
 	private final boolean linear;
+	private int actCount = 1;
 
 	public Z3Solver(String scratchBase, boolean linear) {
-		super(scratchBase, new ProcessBuilder(getZ3(), "-smt2", "-in"), "Z3");
+		super(scratchBase);
 		this.linear = linear;
 	}
 
-	private static String getZ3() {
-		String home = System.getenv("Z3_HOME");
-		if (home != null) {
-			return new File(new File(home, "bin"), "z3").toString();
-		}
-		return "z3";
+	@Override
+	protected String getSolverName() {
+		return "Z3";
+	}
+
+	@Override
+	protected String[] getSolverOptions() {
+		return new String[] { "-smt2", "-in" };
 	}
 
 	@Override
 	public void initialize(Specification spec) {
-		send("(set-option :produce-models true)");
+		setOption("produce-models", true);
+		setOption("produce-unsat-cores", true);
 	}
 
-	private int assumCount = 1;
+	public void setOption(String option, boolean value) {
+		send("(set-option :" + option + " " + value + ")");
+	}
 
 	@Override
 	public Result query(Sexp sexp) {
 		Result result;
 
 		if (linear) {
-			Symbol assum = new Symbol("assum" + assumCount++);
-			define(new VarDecl(assum.str, NamedType.BOOL));
-			send(new Cons("assert", new Cons("=>", assum, new Cons("not", sexp))));
-			send(new Cons("check-sat", assum));
+			Symbol literal = createActivationLiteral("act", actCount++);
+			send(new Cons("assert", new Cons("=>", literal, new Cons("not", sexp))));
+			send(new Cons("check-sat", literal));
 		} else {
 			push();
 			send(new Cons("assert", new Cons("not", sexp)));
 			send(new Cons("check-sat"));
 		}
 
-		markDone();
 		String status = readFromSolver();
 		if (isSat(status)) {
 			send("(get-model)");
-			markDone();
 			result = new SatResult(parseModel(readFromSolver()));
 		} else if (isUnsat(status)) {
 			result = new UnsatResult();
 		} else {
 			// Even for unknown we can sometimes get a partial model
 			send("(get-model)");
-			markDone();
-			
+
 			String content = readFromSolver();
 			if (content == null) {
 				return new UnknownResult();
@@ -89,8 +82,40 @@ public class Z3Solver extends SmtLib2Solver {
 		return result;
 	}
 
-	private void markDone() {
-		send("(echo \"" + DONE + "\")");
+	@Override
+	protected Result quickCheckSat(List<Symbol> activationLiterals) {
+		send(new Cons("check-sat", activationLiterals));
+		String status = readFromSolver();
+		if (isSat(status)) {
+			return new SatResult();
+		} else if (isUnsat(status)) {
+			return new UnsatResult(getUnsatCore(activationLiterals));
+		} else {
+			return new UnknownResult();
+		}
+	}
+
+	@Override
+	protected List<Symbol> getUnsatCore(List<Symbol> activationLiterals) {
+		List<Symbol> unsatCore = new ArrayList<>();
+		send("(get-unsat-core)");
+		for (String s : readCore().split(" ")) {
+			if (!s.isEmpty()) {
+				unsatCore.add(new Symbol(s));
+			}
+		}
+		return unsatCore;
+	}
+
+	private String readCore() {
+		String line = "";
+		try {
+			line = fromSolver.readLine();
+			comment(getSolverName() + ": " + line);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return line.substring(1, line.length() - 1);
 	}
 
 	public Result realizabilityQuery(Sexp outputs, Sexp transition, Sexp properties, int timeoutMs) {
@@ -104,11 +129,9 @@ public class Z3Solver extends SmtLib2Solver {
 		}
 		assertSexp(query);
 		send(new Cons("check-sat"));
-		markDone();
 		String status = readFromSolver();
 		if (isSat(status)) {
 			send("(get-model)");
-			markDone();
 			pop();
 			return new SatResult(parseModel(readFromSolver()));
 		} else if (isUnsat(status)) {
@@ -124,5 +147,13 @@ public class Z3Solver extends SmtLib2Solver {
 		return realizabilityQuery(outputs, transition, properties, 0);
 	}
 
-	
+	@Override
+	public void assertSoft(Sexp sexp) {
+		send(new Cons("assert-soft", sexp));
+	}
+
+	@Override
+	public Result maxsatQuery(Sexp query) {
+		return query(query);
+	}
 }

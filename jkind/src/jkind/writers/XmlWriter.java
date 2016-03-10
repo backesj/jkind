@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jkind.interval.BoolInterval;
 import jkind.interval.NumericInterval;
@@ -25,7 +26,7 @@ public class XmlWriter extends Writer {
 		if (useStdout) {
 			this.out = new PrintWriter(System.out, true);
 		} else {
-			this.out = new PrintWriter(new FileOutputStream(filename), true);
+			this.out = new PrintWriter(new FileOutputStream(filename));
 		}
 		this.types = types;
 	}
@@ -39,17 +40,19 @@ public class XmlWriter extends Writer {
 	@Override
 	public void end() {
 		out.println("</Results>");
+		out.close();
 	}
 
 	@Override
 	public void writeValid(List<String> props, String source, int k, double runtime,
-			List<Expr> invariants) {
+			List<Expr> invariants, Set<String> support) {
 		for (String prop : props) {
-			writeValid(prop, source, k, runtime, invariants);
+			writeValid(prop, source, k, runtime, invariants, support);
 		}
 	}
 
-	public void writeValid(String prop, String source, int k, double runtime, List<Expr> invariants) {
+	public void writeValid(String prop, String source, int k, double runtime,
+			List<Expr> invariants, Set<String> support) {
 		out.println("  <Property name=\"" + prop + "\">");
 		out.println("    <Runtime unit=\"sec\">" + runtime + "</Runtime>");
 		out.println("    <Answer source=\"" + source + "\">valid</Answer>");
@@ -57,7 +60,11 @@ public class XmlWriter extends Writer {
 		for (Expr invariant : invariants) {
 			out.println("    <Invariant>" + escape(invariant) + "</Invariant>");
 		}
+		for (String supp : support) {
+			out.println("    <Support>" + supp + "</Support>");
+		}
 		out.println("  </Property>");
+		out.flush();
 	}
 
 	private String escape(Expr invariant) {
@@ -65,7 +72,8 @@ public class XmlWriter extends Writer {
 	}
 
 	@Override
-	public void writeInvalid(String prop, String source, Counterexample cex, List<String> conflicts, double runtime) {
+	public void writeInvalid(String prop, String source, Counterexample cex,
+			List<String> conflicts, double runtime) {
 		out.println("  <Property name=\"" + prop + "\">");
 		out.println("    <Runtime unit=\"sec\">" + runtime + "</Runtime>");
 		out.println("    <Answer source=\"" + source + "\">falsifiable</Answer>");
@@ -73,6 +81,7 @@ public class XmlWriter extends Writer {
 		writeCounterexample(cex);
 		writeConflicts(conflicts);
 		out.println("  </Property>");
+		out.flush();
 	}
 
 	private void writeConflicts(List<String> conflicts) {
@@ -97,6 +106,7 @@ public class XmlWriter extends Writer {
 			writeCounterexample(cex);
 		}
 		out.println("  </Property>");
+		out.flush();
 	}
 
 	private void writeCounterexample(Counterexample cex) {
@@ -156,5 +166,6 @@ public class XmlWriter extends Writer {
 			out.println("    <PropertyProgress name=\"" + prop + "\"/>");
 		}
 		out.println("  </Progress>");
+		out.flush();
 	}
 }

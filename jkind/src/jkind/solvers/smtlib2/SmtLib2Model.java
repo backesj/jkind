@@ -13,6 +13,7 @@ import jkind.lustre.values.Value;
 import jkind.sexp.Sexp;
 import jkind.solvers.Model;
 import jkind.util.BigFraction;
+import jkind.util.Util;
 
 public class SmtLib2Model extends Model {
 	private final Map<String, Sexp> values = new HashMap<>();
@@ -35,13 +36,13 @@ public class SmtLib2Model extends Model {
 	@Override
 	public Value getValue(String name) {
 		Sexp sexp = values.get(name);
-        Type type = varTypes.get(name);
-        if (sexp == null) {
-            return getDefaultValue(type);
-        }
-        Value value = new SexpEvaluator(this).eval(sexp);
-        return promoteIfNeeded(value, type);
-    }
+		Type type = varTypes.get(name);
+		if (sexp == null) {
+			return Util.getDefaultValue(type);
+		}
+		Value value = new SexpEvaluator(this).eval(sexp);
+		return promoteIfNeeded(value, type);
+	}
 
 	private Value promoteIfNeeded(Value value, Type type) {
 		if (value instanceof IntegerValue && type == NamedType.REAL) {

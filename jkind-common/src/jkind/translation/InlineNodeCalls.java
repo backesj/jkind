@@ -19,25 +19,30 @@ import jkind.lustre.builders.NodeBuilder;
 import jkind.lustre.visitors.ExprMapVisitor;
 import jkind.util.Util;
 
+/**
+ * Inline node calls by introducing additional local variables. Assertions
+ * within called nodes are ignored. Properties within called nodes are lifted to
+ * properties in the main node.
+ */
 public class InlineNodeCalls extends ExprMapVisitor {
 	public static Node program(Program program) {
 		InlineNodeCalls inliner = new InlineNodeCalls(Util.getNodeTable(program.nodes));
 		Node main = program.getMainNode();
-		
+
 		NodeBuilder builder = new NodeBuilder(main);
-		builder.clearAssertions();
-		builder.addAssertions(inliner.visitExprs(main.assertions));
-		builder.clearEquations();
-		builder.addEquations(inliner.visitEquationsQueue(main.equations));
+		builder.clearAssertions().addAssertions(inliner.visitExprs(main.assertions));
+		builder.clearEquations().addEquations(inliner.visitEquationsQueue(main.equations));
 		builder.addLocals(inliner.newLocals);
 		builder.addProperties(inliner.newProperties);
-		
+		builder.addSupports(inliner.newSupport);
+
 		return builder.build();
 	}
 
 	private final Map<String, Node> nodeTable;
 	private final List<VarDecl> newLocals = new ArrayList<>();
 	private final List<String> newProperties = new ArrayList<>();
+	private final List<String> newSupport = new ArrayList<>();
 	private final Map<String, Integer> usedPrefixes = new HashMap<>();
 	private final Queue<Equation> queue = new ArrayDeque<>();
 	private final Map<String, Expr> inlinedCalls = new HashMap<>();
@@ -60,14 +65,9 @@ public class InlineNodeCalls extends ExprMapVisitor {
 	@Override
 	public Expr visit(NodeCallExpr e) {
 		// Detect duplicate node calls to reduce code size
-		String key = getKey(e);
-		if (inlinedCalls.containsKey(key)) {
-			return inlinedCalls.get(key);
-		} else {
-			Expr result = TupleExpr.compress(visitNodeCallExpr(e));
-			inlinedCalls.put(key, result);
-			return result;
-		}
+		return inlinedCalls.computeIfAbsent(getKey(e), key -> {
+			return TupleExpr.compress(visitNodeCallExpr(e));
+		});
 	}
 
 	private String getKey(NodeCallExpr e) {
@@ -87,6 +87,7 @@ public class InlineNodeCalls extends ExprMapVisitor {
 		createInputEquations(node.inputs, e.args, translation);
 		createAssignmentEquations(prefix, node.equations, translation);
 		accumulateProperties(node.properties, translation);
+		accumulateSupportElements(node.support, translation);
 
 		List<IdExpr> result = new ArrayList<>();
 		for (VarDecl decl : node.outputs) {
@@ -145,6 +146,12 @@ public class InlineNodeCalls extends ExprMapVisitor {
 	private void accumulateProperties(List<String> properties, Map<String, IdExpr> translation) {
 		for (String property : properties) {
 			newProperties.add(translation.get(property).id);
+		}
+	}
+
+	private void accumulateSupportElements(List<String> support, Map<String, IdExpr> translation) {
+		for (String element : support) {
+			newSupport.add(translation.get(element).id);
 		}
 	}
 }

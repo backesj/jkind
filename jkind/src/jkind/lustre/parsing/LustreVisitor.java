@@ -169,6 +169,12 @@ public interface LustreVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRecordUpdateExpr(@NotNull LustreParser.RecordUpdateExprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link LustreParser#support}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSupport(@NotNull LustreParser.SupportContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code realType}
 	 * labeled alternative in {@link LustreParser#type}.
 	 * @param ctx the parse tree
