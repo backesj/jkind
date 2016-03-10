@@ -23,11 +23,11 @@ public class Cvc4SolverThread extends Cvc4Solver implements Runnable{
     private AtomicBoolean destroyed = new AtomicBoolean(false);
     private AtomicBoolean running = new AtomicBoolean(false);
     
-    public Cvc4SolverThread(String scratchBase, ProcessBuilder processBuilder, BlockingQueue<MultiSolverResult> outgoing) {
-        super(scratchBase);
+    protected Cvc4SolverThread(String scratchBase, BlockingQueue<MultiSolverResult> outgoing) {
+    	super(scratchBase);
         this.outgoing = outgoing;
     }
-
+    
 	@Override
 	public void run() {
 		running.set(true);
