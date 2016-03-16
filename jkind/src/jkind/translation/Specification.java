@@ -18,7 +18,15 @@ public class Specification {
 
 	public Specification(Node raw) {
 		this.dependencyMap = new DependencyMap(raw, raw.properties);
-		this.node = LustreSlicer.slice(raw, dependencyMap);
+		if (this instanceof InductiveDataTypeSpecification) {
+			// For InductiveDataTypeSpecifications we set all of the properties
+			// to "prop=prop". This is because CVC4 does not like quantifiers
+			// that are not specified at the top level. So we do not do slicing
+			// for specifications containing inductive datatypes.
+			this.node = raw;
+		} else {
+			this.node = LustreSlicer.slice(raw, dependencyMap);
+		}
 		this.typeMap = Util.getTypeMap(node);
 	}
 

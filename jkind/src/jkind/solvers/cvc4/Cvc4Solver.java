@@ -22,7 +22,7 @@ public class Cvc4Solver extends SmtLib2Solver {
 
 	@Override
 	protected String[] getSolverOptions() {
-		return new String[] { "--lang", "smt", "--fmf-fun" };
+		return new String[] { "--lang", "smt" };
 	}
     
 	@Override
