@@ -73,6 +73,7 @@ public class XmlParseThread extends Thread {
 			String line;
 			String analysis = null;
 			while ((line = lines.readLine()) != null) {
+		        System.out.print(line);
 				boolean beginProperty = line.contains("<Property ");
 				boolean endProperty = line.contains("</Property>");
 				boolean beginProgress = line.contains("<Progress ");
@@ -327,16 +328,16 @@ public class XmlParseThread extends Thread {
 		List<Value> elements = new ArrayList<>();
 		for (int i = 0; i < size; i++) {
 			Value elValue;
-			Element arrayEl = getElement(arrayElement, "Array", i);
+			Element itemEl = getElement(arrayElement, "Item", i);
+			Element arrayEl = getElement(itemEl, "Array", 0);
 			if (arrayEl != null) {
 				elValue = parseArrayValue(type, arrayEl);
 			} else {
-				arrayEl = getElement(arrayElement, "Item", i);
-				int index = Integer.parseInt(arrayEl.getAttribute("index"));
+				int index = Integer.parseInt(itemEl.getAttribute("index"));
 				if (index != i) {
 					throw new IllegalArgumentException("We expect array indicies to be sorted");
 				}
-				elValue = Util.parseValue(type, arrayEl.getTextContent());
+				elValue = Util.parseValue(type, itemEl.getTextContent());
 			}
 			elements.add(elValue);
 		}
