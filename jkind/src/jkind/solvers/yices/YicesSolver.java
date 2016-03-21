@@ -13,6 +13,7 @@ import jkind.lustre.BinaryExpr;
 import jkind.lustre.BinaryOp;
 import jkind.lustre.CastExpr;
 import jkind.lustre.Expr;
+import jkind.lustre.InductType;
 import jkind.lustre.NamedType;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
@@ -27,6 +28,7 @@ import jkind.solvers.Result;
 import jkind.solvers.UnsatResult;
 import jkind.solvers.yices.YicesParser.ResultContext;
 import jkind.translation.Relation;
+import jkind.translation.Specification;
 import jkind.util.Util;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -49,7 +51,7 @@ public class YicesSolver extends ProcessBasedSolver implements MaxSatSolver {
 	}
 
 	@Override
-	public void initialize() {
+	public void initialize(Specification spec) {
 		send("(set-evidence! true)");
 		if (arithOnly) {
 			send("(set-arith-only! true)");
@@ -311,4 +313,9 @@ public class YicesSolver extends ProcessBasedSolver implements MaxSatSolver {
 			}
 		});
 	}
+
+    @Override
+    public void define(InductType type) {
+        throw new JKindException("Yices does not support inductive datatypes");
+    }
 }

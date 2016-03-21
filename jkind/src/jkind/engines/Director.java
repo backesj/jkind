@@ -34,6 +34,7 @@ import jkind.lustre.Expr;
 import jkind.results.Counterexample;
 import jkind.results.layout.NodeLayout;
 import jkind.slicing.ModelSlicer;
+import jkind.translation.InductiveDataTypeSpecification;
 import jkind.solvers.SimpleModel;
 import jkind.translation.Specification;
 import jkind.util.CounterexampleExtractor;
@@ -154,35 +155,81 @@ public class Director extends MessageHandler {
 	}
 
 	private void createEngines() {
+		
+		//if the specification contains inductive datatypes we are
+		//very limited about what engines we can run
+		boolean containsInductDataTypes = analysisSpec instanceof InductiveDataTypeSpecification;
+		boolean containsQuantifiers = false;
+		
+		if(containsInductDataTypes){
+			containsQuantifiers = ((InductiveDataTypeSpecification)analysisSpec).containsQuantsOrRecFuns();
+		}
+		
+		if(containsInductDataTypes){
+			if(settings.smoothCounterexamples){
+				Output.println("Warning!: model contains inductive datatypes. "
+						+ "Smooth counterexamples have been disabled");
+			}
+			
+			if(settings.intervalGeneralization){
+				Output.println("Warning!: model contains inductive datatypes. "
+						+ "Interval Generalization has been disabled");
+			}
+			
+			if(settings.invariantGeneration){
+				Output.println("Warning!: model contains inductive datatypes. "
+						+ "Invariant Generation has been disabled");
+			}
+			
+			if(settings.pdrMax > 0){
+				Output.println("Warning!: model contains inductive datatypes. "
+						+ "PDR has been disabled");
+			}
+			
+			if(settings.readAdvice != null){
+				Output.println("Warning!: model contains inductive datatypes. "
+						+ "Advice file will not be used");
+			}
+		}
+		
 		if (settings.boundedModelChecking) {
-			addEngine(new BmcEngine(analysisSpec, settings, this));
+			if(containsQuantifiers){
+				addEngine(new QuantifiedBmcEngine((InductiveDataTypeSpecification) analysisSpec, settings, this));
+			}else{
+				addEngine(new BmcEngine(analysisSpec, settings, this));
+			}
 		}
 
 		if (settings.kInduction) {
-			addEngine(new KInductionEngine(analysisSpec, settings, this));
+			if (containsQuantifiers) {
+				addEngine(new QuantifiedKInductionEngine((InductiveDataTypeSpecification) analysisSpec, settings, this));
+			} else {
+				addEngine(new KInductionEngine(analysisSpec, settings, this));
+			}
 		}
 
-		if (settings.invariantGeneration) {
+		if (settings.invariantGeneration && !containsInductDataTypes) {
 			addEngine(new GraphInvariantGenerationEngine(analysisSpec, settings, this));
+
 		}
 
 		if (settings.reduceSupport) {
 			addEngine(new ReduceSupportEngine(analysisSpec, settings, this));
 		}
 
-		if (settings.smoothCounterexamples) {
+		if (settings.smoothCounterexamples && !containsInductDataTypes) {
 			addEngine(new SmoothingEngine(analysisSpec, settings, this));
 		}
 
-		if (settings.intervalGeneralization) {
+		if (settings.intervalGeneralization && !containsInductDataTypes) {
 			addEngine(new IntervalGeneralizationEngine(analysisSpec, settings, this));
 		}
 
-		if (settings.pdrMax > 0) {
+		if (settings.pdrMax > 0 && !containsInductDataTypes) {
 			addEngine(new PdrEngine(analysisSpec, settings, this));
 		}
 
-		if (settings.readAdvice != null) {
+		if (settings.readAdvice != null && !containsInductDataTypes) {
 			addEngine(new AdviceEngine(analysisSpec, settings, this, inputAdvice));
 		}
 	}

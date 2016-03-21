@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jkind.JKindException;
 import jkind.lustre.ArrayAccessExpr;
 import jkind.lustre.ArrayExpr;
 import jkind.lustre.ArrayType;
@@ -23,20 +24,27 @@ import jkind.lustre.Equation;
 import jkind.lustre.Expr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
+import jkind.lustre.InductDataExpr;
+import jkind.lustre.InductType;
+import jkind.lustre.InductTypeElement;
 import jkind.lustre.IntExpr;
 import jkind.lustre.Location;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
 import jkind.lustre.NodeCallExpr;
 import jkind.lustre.Program;
+import jkind.lustre.QuantExpr;
+import jkind.lustre.QuantOp;
 import jkind.lustre.RealExpr;
 import jkind.lustre.RecordAccessExpr;
 import jkind.lustre.RecordExpr;
 import jkind.lustre.RecordType;
 import jkind.lustre.RecordUpdateExpr;
+import jkind.lustre.RecursiveFunction;
 import jkind.lustre.SubrangeIntType;
 import jkind.lustre.TupleExpr;
 import jkind.lustre.Type;
+import jkind.lustre.TypeConstructor;
 import jkind.lustre.TypeDef;
 import jkind.lustre.UnaryExpr;
 import jkind.lustre.UnaryOp;
@@ -54,12 +62,17 @@ import jkind.lustre.parsing.LustreParser.BoolTypeContext;
 import jkind.lustre.parsing.LustreParser.CastExprContext;
 import jkind.lustre.parsing.LustreParser.CondactExprContext;
 import jkind.lustre.parsing.LustreParser.ConstantContext;
+import jkind.lustre.parsing.LustreParser.ContractContext;
 import jkind.lustre.parsing.LustreParser.EIDContext;
+import jkind.lustre.parsing.LustreParser.EnsureContext;
 import jkind.lustre.parsing.LustreParser.EnumTypeContext;
 import jkind.lustre.parsing.LustreParser.EquationContext;
 import jkind.lustre.parsing.LustreParser.ExprContext;
 import jkind.lustre.parsing.LustreParser.IdExprContext;
 import jkind.lustre.parsing.LustreParser.IfThenElseExprContext;
+import jkind.lustre.parsing.LustreParser.InductDataExprContext;
+import jkind.lustre.parsing.LustreParser.InductTermContext;
+import jkind.lustre.parsing.LustreParser.InductTypeContext;
 import jkind.lustre.parsing.LustreParser.IntExprContext;
 import jkind.lustre.parsing.LustreParser.IntTypeContext;
 import jkind.lustre.parsing.LustreParser.LhsContext;
@@ -71,6 +84,7 @@ import jkind.lustre.parsing.LustreParser.PlainTypeContext;
 import jkind.lustre.parsing.LustreParser.PreExprContext;
 import jkind.lustre.parsing.LustreParser.ProgramContext;
 import jkind.lustre.parsing.LustreParser.PropertyContext;
+import jkind.lustre.parsing.LustreParser.QuantExprContext;
 import jkind.lustre.parsing.LustreParser.RealExprContext;
 import jkind.lustre.parsing.LustreParser.RealTypeContext;
 import jkind.lustre.parsing.LustreParser.RealizabilityInputsContext;
@@ -79,6 +93,8 @@ import jkind.lustre.parsing.LustreParser.RecordEIDContext;
 import jkind.lustre.parsing.LustreParser.RecordExprContext;
 import jkind.lustre.parsing.LustreParser.RecordTypeContext;
 import jkind.lustre.parsing.LustreParser.RecordUpdateExprContext;
+import jkind.lustre.parsing.LustreParser.RecursiveContext;
+import jkind.lustre.parsing.LustreParser.RequireContext;
 import jkind.lustre.parsing.LustreParser.SubrangeTypeContext;
 import jkind.lustre.parsing.LustreParser.SupportContext;
 import jkind.lustre.parsing.LustreParser.TopLevelTypeContext;
@@ -91,6 +107,7 @@ import jkind.lustre.parsing.LustreParser.VarDeclListContext;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
@@ -100,7 +117,8 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		List<TypeDef> types = types(ctx.typedef());
 		List<Constant> constants = constants(ctx.constant());
 		List<Node> nodes = nodes(ctx.node());
-		return new Program(loc(ctx), types, constants, nodes, main);
+		List<RecursiveFunction> recFuns = recursives(ctx.recursive()); 
+		return new Program(loc(ctx), types, constants, nodes, main, recFuns);
 	}
 
 	private List<TypeDef> types(List<TypedefContext> ctxs) {
@@ -144,11 +162,31 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		List<String> realizabilityInputs = realizabilityInputs(ctx.realizabilityInputs());
 		Contract contract = null;
 		if (!ctx.main().isEmpty()) {
-			main = id;
-		}
-		return new Node(loc(ctx), id, inputs, outputs, locals, equations, properties, assertions,
-				realizabilityInputs, contract, support);
-	}
+            main = id;
+        }
+        return new Node(loc(ctx), id, inputs, outputs, locals, equations, properties, assertions,
+                realizabilityInputs, contract, support);
+    }
+
+    private List<RecursiveFunction> recursives(List<RecursiveContext> ctxs) {
+        List<RecursiveFunction> recFuns = new ArrayList<>();
+        for (RecursiveContext ctx : ctxs) {
+            recFuns.add(recursive(ctx));
+        }
+        return recFuns;
+    }
+
+    private RecursiveFunction recursive(RecursiveContext ctx) {
+        String id = ctx.ID().getText();
+        List<VarDecl> inputs = varDecls(ctx.input);
+        List<VarDecl> outputs = varDecls(ctx.output);
+        List<VarDecl> locals = varDecls(ctx.local);
+        List<Equation> equations = equations(ctx.equation());
+        if (outputs.size() != 1) {
+            fatal(ctx.output, "Recursive functions must have a single output");
+        }
+        return new RecursiveFunction(loc(ctx), id, inputs, locals, outputs.get(0), equations);
+    }
 
 	private List<VarDecl> varDecls(VarDeclListContext listCtx) {
 		List<VarDecl> decls = new ArrayList<>();
@@ -199,6 +237,22 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 			props.add(eid(ctx.eID()));
 		}
 		return props;
+	}
+
+	private List<Expr> requires(List<RequireContext> ctxs){
+		List<Expr> requires = new ArrayList<>();
+		for(RequireContext ctx : ctxs){
+			requires.add(expr(ctx.expr()));
+		}
+		return requires;
+	}
+	
+	private List<Expr> ensures(List<EnsureContext> ctxs){
+		List<Expr> ensures = new ArrayList<>();
+		for(EnsureContext ctx : ctxs){
+			ensures.add(expr(ctx.expr()));
+		}
+		return ensures;
 	}
 
 	private List<Expr> assertions(List<AssertionContext> ctxs) {
@@ -263,6 +317,36 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 				values.add(node.getText());
 			}
 			return new EnumType(loc(ctx), id, values);
+		} else if (ctx instanceof InductTypeContext){
+			InductTypeContext ictx = (InductTypeContext) ctx;
+			List<TypeConstructor> typeConstructors = new ArrayList<>();
+			for (InductTermContext term : ictx.inductTerm()){
+				String constrName = term.ID(0).getText();
+				List<InductTypeElement> elements = new ArrayList<>();
+				for(int i = 1; i < term.ID().size(); i++){
+					String elName = term.ID(i).getText();
+					String elTypeName = term.type(i-1).getText();
+					NamedType elType;
+					
+					switch(elTypeName){
+					case "int":
+						elType = NamedType.INT;
+						break;
+					case "real":
+						elType = NamedType.REAL;
+						break;
+					case "bool":
+						elType = NamedType.BOOL;
+						break;
+					default:
+						elType = new NamedType(elTypeName);
+					}
+					
+					elements.add(new InductTypeElement(elName, elType));
+				}
+				typeConstructors.add(new TypeConstructor(constrName, elements));
+			}
+			return new InductType(loc(ctx), id, typeConstructors);
 		} else {
 			throw new IllegalArgumentException(ctx.getClass().getSimpleName());
 		}
@@ -390,6 +474,27 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		return new RecordUpdateExpr(loc(ctx), expr(ctx.expr(0)), ctx.ID().getText(),
 				expr(ctx.expr(1)));
 	}
+	
+	@Override
+	public Expr visitQuantExpr(QuantExprContext ctx){
+		ParseTree quant = ctx.getChild(0);
+		QuantOp quantOp;
+		switch(quant.getText()){
+		case "forall":
+			quantOp = QuantOp.FORALL;
+			break;
+		case "exists":
+			quantOp = QuantOp.EXISTS;
+			break;
+		default:
+			throw new JKindException("unkown quantifier '"+quant.getText()+"'");
+		}
+		
+		List<VarDecl> vars = varDecls(ctx.vars);
+		Expr expr = expr(ctx.expr());
+		
+		return new QuantExpr(loc(ctx), quantOp, vars, expr);
+	}
 
 	@Override
 	public Expr visitArrayAccessExpr(ArrayAccessExprContext ctx) {
@@ -480,6 +585,15 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 	@Override
 	public String visitRecordEID(RecordEIDContext ctx) {
 		return visit(ctx.eID()) + "." + ctx.ID().getText();
+	}
+	
+	@Override
+	public Expr visitInductDataExpr(InductDataExprContext ctx){
+		List<Expr> args = new ArrayList<>();
+		for(ExprContext expCtx : ctx.expr()){
+			args.add(expr(expCtx));
+		}
+		return new InductDataExpr(loc(ctx), ctx.ID().getText(), args);
 	}
 
 	private static Location loc(ParserRuleContext ctx) {

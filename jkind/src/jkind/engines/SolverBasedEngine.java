@@ -3,8 +3,11 @@ package jkind.engines;
 import java.util.ArrayList;
 import java.util.List;
 
+import jkind.JKindException;
 import jkind.JKindSettings;
+import jkind.SolverOption;
 import jkind.lustre.Expr;
+import jkind.lustre.InductType;
 import jkind.lustre.LustreUtil;
 import jkind.lustre.NamedType;
 import jkind.lustre.VarDecl;
@@ -17,6 +20,8 @@ import jkind.solvers.Result;
 import jkind.solvers.SatResult;
 import jkind.solvers.Solver;
 import jkind.solvers.UnknownResult;
+import jkind.solvers.cvc4.Cvc4MultiSolver;
+import jkind.translation.InductiveDataTypeSpecification;
 import jkind.translation.Lustre2Sexp;
 import jkind.translation.Specification;
 import jkind.util.StreamIndex;
@@ -45,13 +50,35 @@ public abstract class SolverBasedEngine extends Engine {
 
 	protected void initializeSolver() {
 		solver = getSolver();
-		solver.initialize();
+		boolean containsInductiveDataTypes = (spec instanceof InductiveDataTypeSpecification);
+		boolean containsRecursiveFunctions = false;
+		if(containsInductiveDataTypes){
+			containsRecursiveFunctions = ((InductiveDataTypeSpecification)spec).containsQuantsOrRecFuns();
+		}
+		
+		if(containsRecursiveFunctions && !(solver instanceof Cvc4MultiSolver)){
+			throw new JKindException("The model contains recursive functions. CVC4 must be used"); 
+		}
+		
+		if(containsInductiveDataTypes && !(settings.solver != SolverOption.Z3 || settings.solver != SolverOption.CVC4)){
+			throw new JKindException("The model contains inducive data types. CVC4 or Z3 must be used");
+		}
+		
+		solver.initialize(spec);
+		if (containsInductiveDataTypes) {
+			for (InductType type : ((InductiveDataTypeSpecification) spec).inductTypes) {
+				solver.define(type);
+			}
+		}
+
 		solver.define(spec.getTransitionRelation());
 		solver.define(new VarDecl(INIT.str, NamedType.BOOL));
+		
 	}
 
+
 	protected Solver getSolver() {
-		return SolverUtil.getSolver(settings.solver, getScratchBase(), spec.node);
+		return SolverUtil.getSolver(settings.solver, getScratchBase(), spec);
 	}
 
 	/** Utility */

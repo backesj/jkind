@@ -4,6 +4,7 @@ import java.math.BigInteger;
 
 import jkind.lustre.ArrayType;
 import jkind.lustre.EnumType;
+import jkind.lustre.InductType;
 import jkind.lustre.NamedType;
 import jkind.lustre.RecordType;
 import jkind.lustre.SubrangeIntType;
@@ -53,4 +54,9 @@ public class DefaultValueVisitor implements TypeVisitor<Value> {
 	public Value visit(SubrangeIntType e) {
 		return new IntegerValue(e.low);
 	}
+
+    @Override
+    public Value visit(InductType inductType) {
+        throw new IllegalArgumentException();
+    }
 }

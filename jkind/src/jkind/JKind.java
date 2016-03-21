@@ -5,9 +5,13 @@ import jkind.analysis.StaticAnalyzer;
 import jkind.engines.Director;
 import jkind.lustre.Node;
 import jkind.lustre.Program;
+import jkind.slicing.DependencyMap;
+import jkind.slicing.LustreSlicer;
+import jkind.translation.InductiveDataTypeSpecification;
 import jkind.translation.InlineSimpleEquations;
 import jkind.translation.Specification;
 import jkind.translation.Translate;
+import jkind.util.Util;
 
 public class JKind {
 	public static void main(String[] args) {
@@ -23,11 +27,26 @@ public class JKind {
 				}
 			}
 
-			Node main = Translate.translate(program);
-			Specification userSpec = new Specification(main);
-			Specification analysisSpec = getAnalysisSpec(userSpec, settings);
+			program = Translate.translateProgram(program);
+			Node main = program.getMainNode();
+			DependencyMap dependencyMap = new DependencyMap(main, main.properties);
+			main = LustreSlicer.slice(main, dependencyMap);
+			//kind of hacky, but we need a way for the specification to contain
+			//recursive functions if they are defined
+			Specification userSpec;
+            if (Util.containsInductDataTypes(program)) {
+                userSpec = new InductiveDataTypeSpecification(main, program);
+            } else {
+                userSpec = new Specification(main);
+            }
+            Specification analysisSpec;
+            if (userSpec instanceof InductiveDataTypeSpecification) {
+                analysisSpec = userSpec;
+            } else {
+                analysisSpec = getAnalysisSpec(userSpec, settings);
+            }
+            new Director(settings, userSpec, analysisSpec).run();
 
-			new Director(settings, userSpec, analysisSpec).run();
 			System.exit(0); // Kills all threads
 		} catch (Throwable t) {
 			t.printStackTrace();

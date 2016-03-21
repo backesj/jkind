@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import jkind.lustre.Expr;
+import jkind.lustre.InductType;
 import jkind.lustre.NamedType;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
@@ -14,13 +15,14 @@ import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
 import jkind.translation.Relation;
+import jkind.translation.Specification;
 
 public abstract class Solver {
-	public abstract void initialize();
-	
+	public abstract void initialize(Specification spec);
 	public abstract void assertSexp(Sexp sexp);
 	public abstract void define(VarDecl decl);
 	public abstract void define(Relation relation);
+	public abstract void define(InductType type);
 
 	/**
 	 * A query focused on the SAT result. Produces a model for SAT. Does not

@@ -72,6 +72,7 @@ public class XmlParseThread extends Thread {
 			StringBuilder buffer = null;
 			String line;
 			String analysis = null;
+
 			while ((line = lines.readLine()) != null) {
 		        System.out.print(line);
 				boolean beginProperty = line.contains("<Property ");
@@ -118,7 +119,9 @@ public class XmlParseThread extends Thread {
 	private Element parseXml(String xml) {
 		try {
 			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.parse(new InputSource(new StringReader(xml)));
+			StringReader stringReader = new StringReader(xml);
+            InputSource inputSource = new InputSource(stringReader);
+            Document doc = builder.parse(inputSource);
 			return doc.getDocumentElement();
 		} catch (Exception e) {
 			throw new JKindException("Error parsing: " + xml, e);

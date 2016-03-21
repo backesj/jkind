@@ -1,6 +1,6 @@
 grammar Lustre;
 
-program: (typedef | constant | node)* EOF;
+program: (typedef | constant | node | recursive)* EOF;
 
 typedef: 'type' ID '=' topLevelType ';';
 
@@ -15,6 +15,15 @@ node:
   'tel' ';'?
 ;
 
+recursive:
+  'recursive' ID '(' input=varDeclList? ')'
+  'returns' '(' output=varDeclList? ')' ';'
+  ('var' local=varDeclList ';')?
+  'let'
+    (equation)+
+  'tel' ';'?
+;
+
 varDeclList: varDeclGroup (';' varDeclGroup)*;
 
 varDeclGroup: eID (',' eID)* ':' type;
@@ -22,6 +31,11 @@ varDeclGroup: eID (',' eID)* ':' type;
 topLevelType: type                                       # plainType
     | 'struct' '{' (ID ':' type) (';' ID ':' type)* '}'  # recordType
     | 'enum' '{' ID (',' ID)* '}'                        # enumType
+    | 'induct' '{' inductTerm ('|' inductTerm)* '}' #inductType 
+    ;
+
+inductTerm: 
+  ID ('(' ID type ')')*
     ;
 
 type: 'int'                                              # intType
@@ -35,6 +49,12 @@ type: 'int'                                              # intType
 bound: '-'? INT;
 
 property: '--%PROPERTY' eID ';';
+
+contract: contract_id (require | ensure)*;
+
+contract_id: '--@contract' ':' ID ';';
+ensure: '--@ensure' expr ';';
+require: '--@require' expr ';'; 
 
 realizabilityInputs: '--%REALIZABLE' (ID (',' ID)*)? ';';
 
@@ -54,6 +74,7 @@ expr: ID                                                       # idExpr
     | BOOL                                                     # boolExpr
     | op=('real' | 'floor') '(' expr ')'                       # castExpr
     | ID '(' (expr (',' expr)*)? ')'                           # nodeCallExpr
+    | ID (expr)*                                               # inductDataExpr    
     | 'condact' '(' expr (',' expr)+ ')'                       # condactExpr
     | expr '.' ID                                              # recordAccessExpr
     | expr '{' ID ':=' expr '}'                                # recordUpdateExpr
@@ -70,6 +91,7 @@ expr: ID                                                       # idExpr
     | <assoc=right> expr op='=>' expr                          # binaryExpr
     | <assoc=right> expr op='->' expr                          # binaryExpr
     | 'if' expr 'then' expr 'else' expr                        # ifThenElseExpr
+    | ('forall' | 'exists') '(' vars=varDeclList ')' '.' expr  # quantExpr
     | ID '{' ID '=' expr (';' ID '=' expr)* '}'                # recordExpr
     | '[' expr (',' expr)* ']'                                 # arrayExpr
     | '(' expr (',' expr)* ')'                                 # tupleExpr

@@ -1,6 +1,8 @@
 package jkind.lustre.visitors;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import jkind.lustre.Ast;
 import jkind.lustre.Constant;
@@ -9,6 +11,7 @@ import jkind.lustre.Equation;
 import jkind.lustre.Expr;
 import jkind.lustre.Node;
 import jkind.lustre.Program;
+import jkind.lustre.RecursiveFunction;
 import jkind.lustre.TypeDef;
 import jkind.lustre.VarDecl;
 
@@ -83,10 +86,15 @@ public class AstMapVisitor extends ExprMapVisitor implements AstVisitor<Ast, Exp
 		List<TypeDef> types = visitTypeDefs(e.types);
 		List<Constant> constants = visitConstants(e.constants);
 		List<Node> nodes = visitNodes(e.nodes);
-		return new Program(e.location, types, constants, nodes, e.main);
+		List<RecursiveFunction> recFuns = visitRecFuns(e.recFuns);
+		return new Program(e.location, types, constants, nodes, e.main, recFuns);
 	}
 
-	protected List<TypeDef> visitTypeDefs(List<TypeDef> es) {
+	private List<RecursiveFunction> visitRecFuns(List<RecursiveFunction> es) {
+	    return map(this::visit, es);  //TODO why does this not work?
+    }
+
+    protected List<TypeDef> visitTypeDefs(List<TypeDef> es) {
 		return map(this::visit, es);
 	}
 
@@ -115,4 +123,14 @@ public class AstMapVisitor extends ExprMapVisitor implements AstVisitor<Ast, Exp
 		}
 		return new Contract(visitExprs(contract.requires), visitExprs(contract.ensures));
 	}
+
+    @Override
+    public RecursiveFunction visit(RecursiveFunction e) {
+        List<VarDecl> inputs = visitVarDecls(e.inputs);
+        VarDecl output = visit(e.output);
+        List<VarDecl> locals = visitVarDecls(e.locals);
+        List<Equation> equations = visitEquations(e.equations);
+        
+        return new RecursiveFunction(e.location, e.id, inputs, locals, output, equations);
+    }
 }

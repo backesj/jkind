@@ -1,7 +1,11 @@
 package jkind.lustre.visitors;
 
+import javax.lang.model.element.TypeElement;
+
 import jkind.lustre.ArrayType;
 import jkind.lustre.EnumType;
+import jkind.lustre.InductType;
+import jkind.lustre.InductTypeElement;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
 import jkind.lustre.Program;
@@ -9,6 +13,7 @@ import jkind.lustre.RecordType;
 import jkind.lustre.SubrangeIntType;
 import jkind.lustre.TupleType;
 import jkind.lustre.Type;
+import jkind.lustre.TypeConstructor;
 import jkind.lustre.TypeDef;
 import jkind.lustre.VarDecl;
 import jkind.util.Util;
@@ -61,5 +66,15 @@ public class TypeIterVisitor implements TypeVisitor<Void> {
 				decl.type.accept(this);
 			}
 		}
+	}
+
+	@Override
+	public Void visit(InductType inductType) {
+		for(TypeConstructor constructor : inductType.constructors){
+			for(InductTypeElement element : constructor.elements){
+				element.type.accept(this);
+			}
+		}
+		return null;
 	}
 }

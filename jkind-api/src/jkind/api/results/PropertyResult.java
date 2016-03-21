@@ -73,7 +73,7 @@ public class PropertyResult extends AnalysisResult {
 	}
 
 	public void tick() {
-		if (status == Status.WORKING) {
+		if (status == Status.WORKING || status == Status.INVALID) {
 			pcs.firePropertyChange("elapased", elapsed, ++elapsed);
 		}
 	}

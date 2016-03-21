@@ -3,6 +3,7 @@ package jkind.engines.pdr;
 import java.util.ArrayList;
 import java.util.List;
 
+import jkind.JKindException;
 import jkind.lustre.ArrayAccessExpr;
 import jkind.lustre.ArrayExpr;
 import jkind.lustre.ArrayUpdateExpr;
@@ -15,10 +16,12 @@ import jkind.lustre.Equation;
 import jkind.lustre.Expr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
+import jkind.lustre.InductDataExpr;
 import jkind.lustre.IntExpr;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
 import jkind.lustre.NodeCallExpr;
+import jkind.lustre.QuantExpr;
 import jkind.lustre.RealExpr;
 import jkind.lustre.RecordAccessExpr;
 import jkind.lustre.RecordExpr;
@@ -217,6 +220,11 @@ public class Lustre2Term extends ScriptUser implements ExprVisitor<Term> {
 	public Term visit(TupleExpr e) {
 		throw new IllegalArgumentException("Tuples must be flattened before translation to Term");
 	}
+	
+	@Override
+	public Term visit(InductDataExpr e) {
+		throw new IllegalArgumentException("PDR does not support reasoning of inductive datatypes");
+	}
 
 	@Override
 	public Term visit(UnaryExpr e) {
@@ -267,4 +275,10 @@ public class Lustre2Term extends ScriptUser implements ExprVisitor<Term> {
 	private Term lessEqual(Term left, Term right) {
 		return term("<=", left, right);
 	}
+
+	@Override
+	public Term visit(QuantExpr e) {
+		throw new JKindException("PDR does not support quantifiers");
+	}
+
 }

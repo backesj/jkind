@@ -2,8 +2,10 @@ package jkind.translation;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import jkind.lustre.ArrayAccessExpr;
 import jkind.lustre.ArrayExpr;
@@ -16,10 +18,12 @@ import jkind.lustre.Equation;
 import jkind.lustre.Expr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
+import jkind.lustre.InductDataExpr;
 import jkind.lustre.IntExpr;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
 import jkind.lustre.NodeCallExpr;
+import jkind.lustre.QuantExpr;
 import jkind.lustre.RealExpr;
 import jkind.lustre.RecordAccessExpr;
 import jkind.lustre.RecordExpr;
@@ -38,8 +42,10 @@ import jkind.util.Util;
 
 public class Lustre2Sexp implements ExprVisitor<Sexp> {
 	public static final Symbol INIT = new Symbol("%init");
-	private final int index;
-	private boolean pre = false;
+	protected final int index;
+	protected boolean pre = false;
+	
+	private Set<String> boundVars = new HashSet<>();
 
 	public Lustre2Sexp(int index) {
 		this.index = index;
@@ -96,6 +102,10 @@ public class Lustre2Sexp implements ExprVisitor<Sexp> {
 	}
 
 	private Symbol pre(String id) {
+		//don't want to rewrite quantified variabels over pre boundries
+		if(boundVars.contains(id)){
+			return curr(id);
+		}
 		return new StreamIndex(id, index - 1).getEncoded();
 	}
 
@@ -248,5 +258,31 @@ public class Lustre2Sexp implements ExprVisitor<Sexp> {
 		default:
 			return new Cons(e.op.toString(), e.expr.accept(this));
 		}
+	}
+
+	@Override
+	public Sexp visit(InductDataExpr e) {
+		List<Sexp> args = new ArrayList<>();
+		for(Expr expr : e.args){
+			args.add(expr.accept(this));
+		}
+        if (args.size() > 0) {
+            return new Cons(e.name, args);
+        }
+        return new Symbol(e.name);
+	}
+
+	@Override
+	public Sexp visit(QuantExpr e) {
+		List<Sexp> args = new ArrayList<>();
+		Set<String> preBoundVars = new HashSet<>();
+		preBoundVars.addAll(boundVars);
+		for(VarDecl var : e.boundVars){
+			boundVars.add(var.id);
+			args.add(new Cons(curr(var.id), new Symbol(Util.capitalize(var.type.toString()))));
+		}
+		Sexp expr = e.expr.accept(this);
+		boundVars = preBoundVars;
+		return new Cons(e.op.toString(), new Cons(args), expr);
 	}
 }

@@ -78,4 +78,9 @@ public final class Signal<T extends Value> implements Comparable<Signal<T>> {
 	public int compareTo(Signal<T> other) {
 		return name.compareTo(other.name);
 	}
+	
+	@Override
+	public String toString(){
+	    return getName();
+	}
 }

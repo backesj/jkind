@@ -1,0 +1,59 @@
+type Nat = induct {suc (pred Nat) | zero};
+type Lst = induct {cons (head Nat) (tail Lst) | nil };
+
+recursive odd(n : Nat) returns (ret : bool);
+let
+  ret = if (is_zero n) then
+          false
+        else if (is_zero (pred n)) then
+          true
+        else
+          (odd (pred (pred n)));
+tel;
+
+recursive even(n : Nat) returns (ret : bool);
+let
+  ret = if (is_zero n) then
+          true
+        else if (is_zero (pred n)) then
+          false
+        else
+          (even (pred (pred n)));
+tel;
+
+recursive in (n : Nat; l : Lst) returns (ret : bool);
+let
+  ret = if (is_nil l) then
+          false
+        else
+          (head l) = n or (in n (tail l));
+tel;
+          
+
+node main(n : Nat) returns();
+var
+  l : Lst;
+  odd_in_past : bool;
+  prop0 : bool;
+  prop1 : bool;
+  prop2 : bool;
+  prop3: bool;
+  prop4 : bool;
+let
+  l = (cons n nil) -> (cons n (pre l));
+  odd_in_past = (odd n) or (false -> pre(odd_in_past));
+  
+  prop0 = forall (m : Nat) . (even (suc m)) = not (even m);
+  prop1 = forall (m : Nat) . (odd (suc m)) = not (odd m);
+  prop2 = forall (m : Nat) . (odd m) = (not (even m));
+  
+  prop3 = forall (m : Nat) . (in m l) => (odd m) => odd_in_past;
+  prop4 = forall (m : Nat) . (in m l) => (not (even m)) => odd_in_past;
+
+  --%PROPERTY prop0;
+  --%PROPERTY prop1;
+  --%PROPERTY prop2;
+  --%PROPERTY prop3;
+  --%PROPERTY prop4;
+  
+tel;

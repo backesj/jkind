@@ -8,6 +8,7 @@ import jkind.JKindException;
 import jkind.lustre.BinaryExpr;
 import jkind.lustre.BinaryOp;
 import jkind.lustre.Expr;
+import jkind.lustre.InductType;
 import jkind.lustre.visitors.ExprConjunctiveVisitor;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
@@ -21,6 +22,7 @@ import jkind.solvers.UnsatResult;
 import jkind.solvers.mathsat.MathSatParser.ModelContext;
 import jkind.solvers.mathsat.MathSatParser.UnsatAssumptionsContext;
 import jkind.solvers.smtlib2.SmtLib2Solver;
+import jkind.translation.Specification;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
@@ -37,7 +39,7 @@ public class MathSatSolver extends SmtLib2Solver {
 	}
 
 	@Override
-	public void initialize() {
+	public void initialize(Specification spec) {
 		send("(set-option :produce-models true)");
 		send("(set-option :produce-unsat-cores true)");
 	}
@@ -130,4 +132,9 @@ public class MathSatSolver extends SmtLib2Solver {
 			}
 		});
 	}
+
+    @Override
+    public void define(InductType type) {
+        throw new JKindException("MathSat does not support inductive datatypes");
+    }
 }

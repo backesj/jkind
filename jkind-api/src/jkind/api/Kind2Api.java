@@ -38,6 +38,7 @@ public class Kind2Api extends KindApi {
 		Kind2PrettyPrintVisitor kind2Printer = new Kind2PrettyPrintVisitor();
 		program.accept(kind2Printer);
 		execute(kind2Printer.toString(), result, monitor);
+
 	}
 	
 	/**

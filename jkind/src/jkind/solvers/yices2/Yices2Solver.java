@@ -3,11 +3,13 @@ package jkind.solvers.yices2;
 import java.util.List;
 
 import jkind.JKindException;
+import jkind.lustre.InductType;
 import jkind.sexp.Symbol;
 import jkind.solvers.Model;
 import jkind.solvers.SolverParserErrorListener;
 import jkind.solvers.smtlib2.SmtLib2Solver;
 import jkind.solvers.yices2.Yices2Parser.ModelContext;
+import jkind.translation.Specification;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
@@ -35,7 +37,7 @@ public class Yices2Solver extends SmtLib2Solver {
 	}
 
 	@Override
-	public void initialize() {
+	public void initialize(Specification spec) {
 		send("(set-option :produce-models true)");
 		send("(set-logic QF_LIRA)");
 	}
@@ -65,4 +67,9 @@ public class Yices2Solver extends SmtLib2Solver {
 		walker.walk(extractor, ctx);
 		return extractor.getModel();
 	}
+
+    @Override
+    public void define(InductType type) {
+        throw new JKindException("Yices2 does not support inductive datatypes");
+    }
 }

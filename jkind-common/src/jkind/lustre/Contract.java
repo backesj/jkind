@@ -5,6 +5,7 @@ import java.util.List;
 import jkind.lustre.visitors.AstVisitor;
 import jkind.util.Util;
 
+
 public class Contract extends Ast {
 	public final List<Expr> requires;
 	public final List<Expr> ensures;
@@ -23,4 +24,5 @@ public class Contract extends Ast {
 	public <T, S extends T> T accept(AstVisitor<T, S> visitor) {
 		return visitor.visit(this);
 	}
+
 }

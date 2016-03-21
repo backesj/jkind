@@ -3,7 +3,6 @@ package jkind.solvers.z3;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
@@ -13,6 +12,7 @@ import jkind.solvers.SatResult;
 import jkind.solvers.UnknownResult;
 import jkind.solvers.UnsatResult;
 import jkind.solvers.smtlib2.SmtLib2Solver;
+import jkind.translation.Specification;
 
 public class Z3Solver extends SmtLib2Solver implements MaxSatSolver {
 	private final boolean linear;
@@ -34,7 +34,7 @@ public class Z3Solver extends SmtLib2Solver implements MaxSatSolver {
 	}
 
 	@Override
-	public void initialize() {
+	public void initialize(Specification spec) {
 		setOption("produce-models", true);
 		setOption("produce-unsat-cores", true);
 	}

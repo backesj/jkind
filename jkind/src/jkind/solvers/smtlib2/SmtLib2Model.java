@@ -1,6 +1,7 @@
 package jkind.solvers.smtlib2;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,7 +17,14 @@ import jkind.util.Util;
 
 public class SmtLib2Model extends Model {
 	private final Map<String, Sexp> values = new HashMap<>();
-
+	
+	public SmtLib2Model(Map<String, Type> varTypes, Set<String> typeConstructors) {
+		 this(varTypes);
+		 for(String type : typeConstructors){
+			 addTypeConstructor(type);
+		 }
+	}
+	
 	public SmtLib2Model(Map<String, Type> varTypes) {
 		super(varTypes);
 	}
@@ -24,7 +32,7 @@ public class SmtLib2Model extends Model {
 	public void addValue(String id, Sexp sexp) {
 		values.put(id, sexp);
 	}
-
+	
 	@Override
 	public Value getValue(String name) {
 		Sexp sexp = values.get(name);

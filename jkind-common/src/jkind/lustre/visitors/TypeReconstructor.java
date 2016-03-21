@@ -18,11 +18,15 @@ import jkind.lustre.EnumType;
 import jkind.lustre.Expr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
+import jkind.lustre.InductDataExpr;
+import jkind.lustre.InductType;
+import jkind.lustre.InductTypeElement;
 import jkind.lustre.IntExpr;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
 import jkind.lustre.NodeCallExpr;
 import jkind.lustre.Program;
+import jkind.lustre.QuantExpr;
 import jkind.lustre.RealExpr;
 import jkind.lustre.RecordAccessExpr;
 import jkind.lustre.RecordExpr;
@@ -32,6 +36,7 @@ import jkind.lustre.SubrangeIntType;
 import jkind.lustre.TupleExpr;
 import jkind.lustre.TupleType;
 import jkind.lustre.Type;
+import jkind.lustre.TypeConstructor;
 import jkind.lustre.TypeDef;
 import jkind.lustre.UnaryExpr;
 import jkind.lustre.VarDecl;
@@ -44,6 +49,7 @@ import jkind.util.Util;
  */
 public class TypeReconstructor implements ExprVisitor<Type> {
 	private final Map<String, Type> typeTable = new HashMap<>();
+	private final Map<String, Type> inductDataTable = new HashMap<>();
 	private final Map<String, Type> constantTable = new HashMap<>();
 	private final Map<String, Expr> constantDefinitionTable = new HashMap<>();
 	private final Map<String, EnumType> enumValueTable = new HashMap<>();
@@ -52,9 +58,25 @@ public class TypeReconstructor implements ExprVisitor<Type> {
 
 	public TypeReconstructor(Program program) {
 		populateTypeTable(program.types);
+		populateInductDataTable(program.types);
 		populateEnumValueTable(program.types);
 		populateConstantTable(program.constants);
 		nodeTable.putAll(Util.getNodeTable(program.nodes));
+	}
+
+	private void populateInductDataTable(List<TypeDef> typeDefs) {
+		for(TypeDef typeDef : typeDefs){
+			if(typeDef.type instanceof InductType){
+				InductType inductType = (InductType)typeDef.type;
+				for(TypeConstructor constructor : inductType.constructors){
+					inductDataTable.put(constructor.name, inductType);
+					inductDataTable.put(InductDataExpr.CONSTRUCTOR_PREDICATE_PREFIX+constructor.name, NamedType.BOOL);
+					for(InductTypeElement element : constructor.elements){
+						inductDataTable.put(element.name, element.type);
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -99,6 +121,18 @@ public class TypeReconstructor implements ExprVisitor<Type> {
 		variableTable.put(varDecl.id, resolveType(varDecl.type));
 	}
 
+	public void addVariables(List<VarDecl> varDecls){
+		for(VarDecl var : varDecls){
+			addVariable(var);
+		}
+	}
+	
+	public void removeVariables(List<VarDecl> varDecls){
+		for(VarDecl var : varDecls){
+			variableTable.remove(var.id);
+		}
+	}
+	
 	@Override
 	public Type visit(ArrayAccessExpr e) {
 		ArrayType array = (ArrayType) e.array.accept(this);
@@ -277,5 +311,18 @@ public class TypeReconstructor implements ExprVisitor<Type> {
 				}
 			}
 		});
+	}
+
+	@Override
+	public Type visit(InductDataExpr e) {
+		return inductDataTable.get(e.name);
+	}
+
+	@Override
+	public Type visit(QuantExpr e) {
+		addVariables(e.boundVars);
+		e.expr.accept(this);
+		removeVariables(e.boundVars);
+		return NamedType.BOOL;
 	}
 }

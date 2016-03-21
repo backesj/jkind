@@ -21,12 +21,18 @@ import java.util.TreeSet;
 import jkind.JKindException;
 import jkind.interval.Interval;
 import jkind.lustre.EnumType;
+import jkind.lustre.InductDataExpr;
+import jkind.lustre.InductType;
+import jkind.lustre.InductTypeElement;
 import jkind.lustre.Equation;
 import jkind.lustre.IdExpr;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
+import jkind.lustre.Program;
+import jkind.lustre.RecursiveFunction;
 import jkind.lustre.SubrangeIntType;
 import jkind.lustre.Type;
+import jkind.lustre.TypeConstructor;
 import jkind.lustre.TypeDef;
 import jkind.lustre.VarDecl;
 import jkind.lustre.values.BooleanValue;
@@ -36,12 +42,38 @@ import jkind.lustre.values.RealValue;
 import jkind.lustre.values.Value;
 
 public class Util {
+
+	public static Collection<String> inductDataTypeFunctions(InductType type) {
+		Set<String> ids = new HashSet<>();
+		for (TypeConstructor constructor : type.constructors) {
+			if (constructor.elements.size() > 0) {
+				ids.add(constructor.name);
+				for (InductTypeElement el : constructor.elements) {
+					ids.add(el.name);
+				}
+			}
+		}
+		return ids;
+	}
+	
+	public static Collection<String> inductDataTypeConstructorPredicateNames(InductType type) {
+		Set<String> ids = new HashSet<>();
+		for (TypeConstructor constructor : type.constructors) {
+			ids.add(InductDataExpr.CONSTRUCTOR_PREDICATE_PREFIX+constructor.name);
+		}
+		return ids;
+	}
+
 	public static List<VarDecl> getVarDecls(Node node) {
 		List<VarDecl> decls = new ArrayList<>();
 		decls.addAll(node.inputs);
 		decls.addAll(node.outputs);
 		decls.addAll(node.locals);
 		return decls;
+	}
+	
+	public static String capitalize(String string){
+		return Character.toUpperCase(string.charAt(0)) + string.substring(1);
 	}
 
 	public static Map<String, Type> getTypeMap(Node node) {
@@ -67,7 +99,7 @@ public class Util {
 		}
 		return nodeTable;
 	}
-
+	
 	/*
 	 * Get the name of the type as modeled by the SMT solvers
 	 */
@@ -77,6 +109,8 @@ public class Util {
 			return namedType.name;
 		} else if (type instanceof SubrangeIntType || type instanceof EnumType) {
 			return "int";
+		}else if (type instanceof InductType){
+			return ((InductType) type).name;
 		} else {
 			throw new IllegalArgumentException("Cannot find name for type " + type);
 		}
@@ -275,4 +309,25 @@ public class Util {
 
 	/** Default name for realizability query property in XML file */
 	public static final String REALIZABLE = "%REALIZABLE";
+
+    public static Map<String, RecursiveFunction> getRecFunTable(List<RecursiveFunction> recFuns) {
+        Map<String, RecursiveFunction> map = new HashMap<>();
+        for(RecursiveFunction recFun : recFuns){
+            map.put(recFun.id, recFun);
+        }
+        return map;
+    }
+
+    public static boolean containsInductDataTypes(Program program) {
+        if(program.recFuns.size() != 0){
+            return true;
+        }
+        
+        for(TypeDef def : program.types){
+            if(def.type instanceof InductType){
+                return true;
+            }
+        }
+        return false;
+    }
 }

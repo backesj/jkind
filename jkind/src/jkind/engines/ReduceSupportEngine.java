@@ -44,7 +44,7 @@ public class ReduceSupportEngine extends SolverBasedEngine {
 	@Override
 	protected void initializeSolver() {
 		solver = getSolver();
-		solver.initialize();
+		solver.initialize(spec);
 
 		for (Symbol supp : supportMap.values()) {
 			solver.define(new VarDecl(supp.str, NamedType.BOOL));

@@ -12,8 +12,10 @@ import jkind.lustre.CondactExpr;
 import jkind.lustre.Expr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
+import jkind.lustre.InductDataExpr;
 import jkind.lustre.IntExpr;
 import jkind.lustre.NodeCallExpr;
+import jkind.lustre.QuantExpr;
 import jkind.lustre.RealExpr;
 import jkind.lustre.RecordAccessExpr;
 import jkind.lustre.RecordExpr;
@@ -107,6 +109,11 @@ public class ExprDisjunctiveVisitor implements ExprVisitor<Boolean> {
 		return e.expr.accept(this);
 	}
 
+	@Override
+	public Boolean visit(InductDataExpr e) {
+		return visitExprs(e.args);
+	}
+	
 	protected Boolean visitExprs(Collection<Expr> list) {
 		for (Expr e : list) {
 			if (e.accept(this)) {
@@ -115,4 +122,10 @@ public class ExprDisjunctiveVisitor implements ExprVisitor<Boolean> {
 		}
 		return false;
 	}
+
+	@Override
+	public Boolean visit(QuantExpr e) {
+		return e.expr.accept(this);
+	}
+
 }

@@ -15,8 +15,10 @@ import jkind.lustre.CastExpr;
 import jkind.lustre.CondactExpr;
 import jkind.lustre.Expr;
 import jkind.lustre.IfThenElseExpr;
+import jkind.lustre.InductDataExpr;
 import jkind.lustre.IntExpr;
 import jkind.lustre.NodeCallExpr;
+import jkind.lustre.QuantExpr;
 import jkind.lustre.RealExpr;
 import jkind.lustre.RecordAccessExpr;
 import jkind.lustre.RecordExpr;
@@ -25,6 +27,7 @@ import jkind.lustre.TupleExpr;
 import jkind.lustre.UnaryExpr;
 import jkind.lustre.values.ArrayValue;
 import jkind.lustre.values.BooleanValue;
+import jkind.lustre.values.InductDataValue;
 import jkind.lustre.values.IntegerValue;
 import jkind.lustre.values.RealValue;
 import jkind.lustre.values.RecordValue;
@@ -180,6 +183,12 @@ public abstract class Evaluator implements ExprVisitor<Value> {
 		}
 		return value.applyUnaryOp(e.op);
 	}
+	
+	@Override
+	public Value visit(InductDataExpr e) {
+		List<Value> elements = visitExprs(e.args);
+		return new InductDataValue(e.name, elements);
+	}
 
 	private List<Value> visitExprs(List<Expr> es) {
 		List<Value> values = new ArrayList<>();
@@ -191,5 +200,10 @@ public abstract class Evaluator implements ExprVisitor<Value> {
 			values.add(value);
 		}
 		return values;
+	}
+	
+	@Override
+	public Value visit(QuantExpr e){
+		return e.expr.accept(this);
 	}
 }

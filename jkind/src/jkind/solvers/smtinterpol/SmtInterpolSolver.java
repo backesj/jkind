@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import jkind.JKindException;
+import jkind.lustre.InductType;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
 import jkind.lustre.values.Value;
@@ -19,6 +20,7 @@ import jkind.solvers.Solver;
 import jkind.solvers.UnknownResult;
 import jkind.solvers.UnsatResult;
 import jkind.translation.Relation;
+import jkind.translation.Specification;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -35,7 +37,7 @@ public class SmtInterpolSolver extends Solver {
 	}
 
 	@Override
-	public void initialize() {
+	public void initialize(Specification spec) {
 		script.setOption(":produce-unsat-cores", true);
 		script.setLogic(Logics.QF_UFLIRA);
 		script.setOption(":verbosity", 2);
@@ -165,4 +167,9 @@ public class SmtInterpolSolver extends Solver {
 	private Term convert(Sexp sexp) {
 		return SmtInterpolUtil.convert(script, sexp);
 	}
+
+    @Override
+    public void define(InductType type) {
+        throw new JKindException("SMTInterpol does not support inductive datatypes");
+    }
 }

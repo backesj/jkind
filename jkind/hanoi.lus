@@ -1,0 +1,71 @@
+type Lst = induct {cons (car int) (cdr Lst) | nil};
+
+recursive ordered (l : Lst) returns (ret : bool);
+let
+  ret = if (is_nil l) then
+          true
+        else if (is_nil (cdr l)) then
+          true
+        else
+          (car l) > (car (cdr l)) and (ordered (cdr l));
+tel;
+
+node main (init_l : Lst; ltm : bool; ltr : bool; mtl : bool; mtr : bool; rtl : bool; rtm : bool) returns ();
+var
+  pegl : Lst;
+  pegm : Lst;
+  pegr : Lst;
+  prop : bool;
+let
+  pegl = (cons 4 (cons 3 (cons 2 (cons 1 nil)))) ->
+      if (ltm or ltr) then
+        (cdr pre(pegl))
+      else if mtl then
+        (cons (car pre(pegm)) pre(pegl))
+      else if rtl then
+        (cons (car pre(pegr)) pre(pegl))
+      else
+        pre(pegl);
+        
+  pegm = nil ->
+      if (mtl or mtr) then
+        (cdr pre(pegm))
+      else if ltm then
+        (cons (car pre(pegl)) pre(pegm))
+      else if rtm then
+        (cons (car pre(pegr)) pre(pegm))
+      else
+        pre(pegm);
+        
+  pegr = nil ->
+      if (rtl or rtm) then
+        (cdr pre(pegr))
+      else if ltr then
+        (cons (car pre(pegl)) pre(pegr))
+      else if mtr then
+        (cons (car pre(pegm)) pre(pegr))
+      else
+        pre(pegr);
+        
+  assert ltm => not (ltr or mtl or mtr or rtl or rtm);
+  assert ltr => not (ltm or mtl or mtr or rtl or rtm);
+  assert mtl => not (ltr or ltm or mtr or rtl or rtm);
+  assert mtr => not (ltr or mtl or ltm or rtl or rtm);
+  assert rtl => not (ltr or mtl or mtr or ltm or rtm);
+  assert rtm => not (ltr or mtl or mtr or ltm or ltm);
+  
+  assert ltm or ltr or mtl or mtr or rtl or rtm;
+  
+  assert (car pegl) > (car (cdr pegl));
+  assert (car pegm) > (car (cdr pegm));  
+  assert (car pegr) > (car (cdr pegr));
+  
+  assert true -> (is_nil pre(pegl)) => not (ltm or ltr);
+  assert true -> (is_nil pre(pegm)) => not (mtl or mtr);
+  assert true -> (is_nil pre(pegr)) => not (rtl or rtm);
+
+  prop = pegr <> (cons 4 (cons 3 (cons 2 (cons 1 nil))));
+
+  --%PROPERTY prop;
+
+tel;

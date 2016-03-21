@@ -2,11 +2,16 @@ package jkind.solvers.smtlib2;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jkind.JKindException;
+import jkind.lustre.InductType;
+import jkind.lustre.InductTypeElement;
 import jkind.lustre.NamedType;
 import jkind.lustre.Type;
+import jkind.lustre.TypeConstructor;
 import jkind.lustre.VarDecl;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
@@ -28,6 +33,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 
 public abstract class SmtLib2Solver extends ProcessBasedSolver {
+    private final Set<String> definedTypes = new HashSet<>();
+    private final Set<String> typeConstructors = new HashSet<>();
 	public SmtLib2Solver(String scratchBase) {
 		super(scratchBase);
 	}
@@ -72,7 +79,46 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		send(new Cons("define-fun", new Symbol(relation.getName()), inputs(relation.getInputs()),
 				type(NamedType.BOOL), relation.getBody()));
 	}
+	
+	@Override
+	public void define(InductType type) {
 
+        if (!definedTypes.contains(type.name)) {
+            definedTypes.add(type.name);
+            List<Sexp> constructorExprs = new ArrayList<>();
+            for (TypeConstructor constructor : type.constructors) {
+                // args.add(new Symbol(constructor.name));
+            	typeConstructors.add(constructor.name);
+                List<Sexp> args = new ArrayList<>();
+                for (InductTypeElement element : constructor.elements) {
+                    args.add(new Cons(element.name, type(element.type)));
+                }
+                constructorExprs.add(new Cons(constructor.name, args));
+            }
+            Sexp cons = new Cons(type.name, constructorExprs);
+            cons = new Cons("declare-datatypes", new Symbol("()"), new Symbol("(" + cons.toString() + ")"));
+            send(cons);
+            isWellFounded();
+        }
+	}
+
+    protected boolean isWellFounded() {
+        try {
+            if (fromSolver.ready()) {
+                String line = fromSolver.readLine();
+                if (line.contains(" is not well-founded")) {
+                    int endIndex = line.indexOf(" is not well-founded");
+                    // TODO: this will break if the error message changes
+                    String typeName = line.substring(21, endIndex);
+                    throw new JKindException("Type '" + typeName + "' is not well-founded");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+	
 	private Sexp inputs(List<VarDecl> inputs) {
 		List<Sexp> args = new ArrayList<>();
 		for (VarDecl vd : inputs) {
@@ -95,6 +141,7 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		} else if (isUnsat(status)) {
 			result = new UnsatResult();
 		} else {
+		    result = new UnknownResult();
 			throw new IllegalArgumentException("Unknown result: " + result);
 		}
 
@@ -152,6 +199,11 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 					break;
 				} else if (line.contains("model is not available")) {
 					return null;
+				} else if (line.contains(" is not well-founded")){
+				    int endIndex = line.indexOf(" is not well-founded");
+				    //TODO: this will break if the error message changes
+				    String typeName = line.substring(21, endIndex);
+				    throw new JKindException("Type '"+typeName+"' is not well-founded");
 				} else if (line.contains(" |-> ")) {
 					// Ignore Z3 optimization information
 				} else if (line.contains("error \"") || line.contains("Error:")) {
@@ -194,8 +246,7 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		if (parser.getNumberOfSyntaxErrors() > 0) {
 			throw new JKindException("Error parsing " + getSolverName() + " output: " + string);
 		}
-
-		return ModelExtractor.getModel(ctx, varTypes);
+		return ModelExtractor.getModel(ctx, varTypes, typeConstructors);
 	}
 
 	@Override

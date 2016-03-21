@@ -2,6 +2,8 @@ package jkind.lustre.visitors;
 
 import static java.util.stream.Collectors.joining;
 
+import java.lang.reflect.Constructor;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -20,18 +22,24 @@ import jkind.lustre.Equation;
 import jkind.lustre.Expr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
+import jkind.lustre.InductDataExpr;
+import jkind.lustre.InductType;
+import jkind.lustre.InductTypeElement;
 import jkind.lustre.IntExpr;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
 import jkind.lustre.NodeCallExpr;
 import jkind.lustre.Program;
+import jkind.lustre.QuantExpr;
 import jkind.lustre.RealExpr;
 import jkind.lustre.RecordAccessExpr;
 import jkind.lustre.RecordExpr;
 import jkind.lustre.RecordType;
 import jkind.lustre.RecordUpdateExpr;
+import jkind.lustre.RecursiveFunction;
 import jkind.lustre.TupleExpr;
 import jkind.lustre.Type;
+import jkind.lustre.TypeConstructor;
 import jkind.lustre.TypeDef;
 import jkind.lustre.UnaryExpr;
 import jkind.lustre.UnaryOp;
@@ -124,6 +132,18 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 				}
 			}
 			write("}");
+		} else if (type instanceof InductType){
+			InductType inductType = (InductType) type;
+			write("induct {");
+			String constructDelim = "";
+			for(TypeConstructor constructor : inductType.constructors){
+				write(constructDelim + constructor.name);
+				for(InductTypeElement element : constructor.elements){
+					write(" ("+element.name+" "+element.type+")");
+				}
+				constructDelim = " | ";
+			}
+			write("}");
 		} else {
 			write(type);
 		}
@@ -212,6 +232,43 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 		return null;
 	}
 
+	
+	 @Override
+	    public Void visit(RecursiveFunction recFun) {
+	        write("recursive ");
+	        write(recFun.id);
+	        write("(");
+	        newline();
+	        varDecls(recFun.inputs);
+	        newline();
+	        write(") returns (");
+	        newline();
+	        varDecls(Collections.singletonList(recFun.output));
+	        newline();
+	        write(");");
+	        newline();
+	        
+	        if (!recFun.locals.isEmpty()) {
+	            write("var");
+	            newline();
+	            varDecls(recFun.locals);
+	            write(";");
+	            newline();
+	        }
+	        write("let");
+	        newline();
+
+	        for (Equation equation : recFun.equations) {
+	            write("  ");
+	            equation.accept(this);
+	            newline();
+	            newline();
+	        }
+
+	        write("tel;");
+	        return null;
+	    }
+	
 	private void varDecls(List<VarDecl> varDecls) {
 		Iterator<VarDecl> iterator = varDecls.iterator();
 		while (iterator.hasNext()) {
@@ -481,6 +538,7 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 			write(";");
 			newline();
 		}
+
 		for (Expr expr : contract.ensures) {
 			write("guarantee ");
 			expr(expr);
@@ -491,4 +549,28 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 		newline();
 		return null;
 	}
+
+	@Override
+	public Void visit(InductDataExpr e) {
+		write("("+e.name);
+		for(Expr arg : e.args){
+			write(" ");
+			expr(arg);
+		}
+		write(")");
+        return null;
+	}
+
+	@Override
+	public Void visit(QuantExpr e) {
+		write(e.op);
+		write("(");
+		varDecls(e.boundVars);
+		write(")");
+		write(".");
+		expr(e.expr);
+		return null;
+	}
+
+   
 }

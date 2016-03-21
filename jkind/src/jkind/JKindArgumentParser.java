@@ -8,6 +8,7 @@ import java.util.List;
 import jkind.engines.SolverUtil;
 import jkind.lustre.Node;
 import jkind.lustre.builders.NodeBuilder;
+import jkind.translation.Specification;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -216,7 +217,8 @@ public class JKindArgumentParser extends ArgumentParser {
 	private boolean solverIsAvailable(SolverOption solverOption) {
 		try {
 			Node emptyNode = new NodeBuilder("empty").build();
-			SolverUtil.getSolver(solverOption, null, emptyNode);
+			Specification emptySpec = new Specification(emptyNode);
+			SolverUtil.getSolver(solverOption, null, emptySpec);
 		} catch (JKindException e) {
 			return false;
 		}

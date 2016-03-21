@@ -21,6 +21,7 @@ public class Node extends Ast {
 	public Node(Location location, String id, List<VarDecl> inputs, List<VarDecl> outputs,
 			List<VarDecl> locals, List<Equation> equations, List<String> properties,
 			List<Expr> assertions, List<String> realizabilityInputs, Contract contract, List<String> support) {
+
 		super(location);
 		Assert.isNotNull(id);
 		this.id = id;

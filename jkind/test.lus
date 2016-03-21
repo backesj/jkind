@@ -1,0 +1,44 @@
+type Lst = induct {cons (head int) (tail Lst) | nil };
+
+recursive app(l1 : Lst; l2 : Lst) returns (res : Lst);
+let
+  res = if (is_nil l1) then l2 else (cons (head l1) (app (tail l1) l2));
+tel;
+
+recursive rev(l : Lst) returns (res : Lst);
+let
+  res = if (is_nil l) then nil else (app (rev (tail l)) (cons (head l) nil));
+tel;
+
+recursive pos(l : Lst) returns (res : bool);
+let
+  res = if (is_nil l) then true else if (head l) < 0 then false else (pos (tail l));
+tel;
+
+recursive in(i : int; l : Lst) returns (res : bool);
+let
+  res = if (is_nil l) then false else ((head l) = i) or (in i (tail l));
+tel;
+
+
+node main(i : int) returns();
+var
+  ok4 : bool;
+  ok5 : bool;
+  ok6 : bool;
+  
+  l : Lst;
+  prop : bool;
+let
+  l = (cons i nil) -> (cons i (pre l));
+  ok4 = forall (j : int; q : Lst; r : Lst). (in j q) => (in j (app r q));
+  ok5 = forall (j : int; q : Lst; r : Lst). (in j q) => (in j (app q r));
+
+  ok6 = forall (j : int; q : Lst) . (in j q) => (in j (rev q));
+  prop = forall (j : int) . (in j l) => (in j (rev l));
+
+  --%PROPERTY ok4;
+  --%PROPERTY ok5;
+  --%PROPERTY ok6;
+  --%PROPERTY prop;
+tel;
