@@ -1,6 +1,7 @@
 package jkind.api.kind2;
 
 import jkind.lustre.ArrayType;
+import jkind.lustre.QuantExpr;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
 import jkind.lustre.visitors.PrettyPrintVisitor;
@@ -22,4 +23,18 @@ public class Kind2PrettyPrintVisitor extends PrettyPrintVisitor {
 			return type.toString();
 		}
 	}
+	
+	@Override
+    public Void visit(QuantExpr e) {
+        write(e.op);
+        write("(");
+        String delim = "";
+        for(VarDecl var : e.boundVars){
+            write(delim+var.id+" : "+var.type);
+            delim = ",";
+        }
+        write(")");
+        expr(e.expr);
+        return null;
+    }
 }
