@@ -65,26 +65,21 @@ public class ConsoleWriter extends Writer {
 		System.out.println();
 	}
 
-	@Override
-	public void writeUnknown(List<String> props, int trueFor,
-			Map<String, Counterexample> inductiveCounterexamples, double runtime) {
-		writeLine();
-		System.out.println("UNKNOWN PROPERTIES: " + props + " || True for " + trueFor + " steps"
-				+ " || Time = " + Util.secondsToTime(runtime));
-		writeLine();
-		System.out.println();
-		for (String prop : props) {
-			Counterexample cex = inductiveCounterexamples.get(prop);
-			if (cex != null) {
-				writeLine();
-				System.out.println("INDUCTIVE COUNTEREXAMPLE: " + prop + " || K = "
-						+ cex.getLength());
-				System.out.println(cex.toString(layout));
-				writeLine();
-				System.out.println();
-			}
-		}
-	}
+    @Override
+    public void writeUnknown(String prop, int trueFor, Counterexample icex, double runtime) {
+        writeLine();
+        System.out.println("UNKNOWN PROPERTIES: " + prop + " || True for " + trueFor + " steps"
+                + " || Time = " + Util.secondsToTime(runtime));
+        writeLine();
+        System.out.println();
+
+        writeLine();
+        System.out.println("INDUCTIVE COUNTEREXAMPLE: " + prop + " from " + icex.getSource() + " || K = "
+                + icex.getLength());
+        System.out.println(icex.toString(layout));
+        writeLine();
+        System.out.println();
+    }
 
 	@Override
 	public void writeBaseStep(List<String> props, int k) {

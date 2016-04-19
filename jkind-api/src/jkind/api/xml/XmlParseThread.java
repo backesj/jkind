@@ -263,8 +263,10 @@ public class XmlParseThread extends Thread {
 		if (cexElement == null) {
 			return null;
 		}
+		
+		String source = cexElement.getAttribute("source");
 
-		Counterexample cex = new Counterexample(k);
+		Counterexample cex = new Counterexample(k, source);
 		for (Element signalElement : getElements(cexElement, getSignalTag())) {
 			cex.addSignal(getSignal(signalElement));
 		}

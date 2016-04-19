@@ -169,16 +169,17 @@ public class ExcelFormatter implements Closeable {
 	private void write(UnknownProperty property) throws WriteException {
 		String name = property.getName();
 		int trueFor = property.getTrueFor();
-		Counterexample cex = property.getInductiveCounterexample();
+		List<Counterexample> cexs = property.getInductiveCounterexamples();
 		double runtime = property.getRuntime();
 
 		summarySheet.addCell(new Label(0, summaryRow, name));
-		if (cex == null) {
+		if (cexs.size() == 0) {
 			summarySheet.addCell(new Label(1, summaryRow, "Unknown"));
-		} else {
-			WritableSheet cexSheet = writeCounterexample(name, cex, Collections.emptyList());
-			summarySheet.addHyperlink(new WritableHyperlink(1, summaryRow, "Unknown", cexSheet, 0,
-					0));
+        } else {
+            for (Counterexample cex : cexs) {
+                WritableSheet cexSheet = writeCounterexample(name, cex, Collections.emptyList());
+                summarySheet.addHyperlink(new WritableHyperlink(1, summaryRow, "Unknown", cexSheet, 0, 0));
+            }
 		}
 		summarySheet.addCell(new Number(4, summaryRow, runtime));
 		summarySheet.addCell(new Number(5, summaryRow, trueFor));

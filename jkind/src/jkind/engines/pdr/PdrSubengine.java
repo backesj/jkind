@@ -1,12 +1,16 @@
 package jkind.engines.pdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import jkind.JKindSettings;
+import jkind.Settings;
 import jkind.engines.Director;
 import jkind.engines.StopException;
+import jkind.engines.messages.InductiveCounterexampleMessage;
 import jkind.engines.messages.InvalidMessage;
 import jkind.engines.messages.InvariantMessage;
 import jkind.engines.messages.Itinerary;
@@ -58,6 +62,7 @@ public class PdrSubengine extends Thread {
 
 	@Override
 	public void run() {
+        JKindSettings settings = parent.getSettings();
 		Z.comment("Checking property: " + prop);
 
 		// Create F_INF and F[0]
@@ -77,6 +82,9 @@ public class PdrSubengine extends Thread {
 						sendValidAndInvariants(invariants);
 						return;
 					}
+					if(settings.inductiveCounterexamples){
+                        reportInductCex();
+                    }
 				}
 			}
 		} catch (CounterexampleException cex) {
@@ -92,7 +100,7 @@ public class PdrSubengine extends Thread {
 		}
 	}
 
-	private void blockCube(TCube s0) {
+    private void blockCube(TCube s0) {
 		PriorityQueue<TCube> Q = new PriorityQueue<>();
 		Q.add(s0);
 
@@ -237,11 +245,19 @@ public class PdrSubengine extends Thread {
 			curr = curr.getNext();
 		}
 		return result;
-	}
+    }
 
-	private void sendValidAndInvariants(List<Expr> invariants) {
-		Itinerary itinerary = director.getValidMessageItinerary();
-		director.broadcast(new ValidMessage(parent.getName(), prop, 1, invariants, null, itinerary));
+    private void reportInductCex() {
+        Model model = Z.getIndCex();
+        if (model != null) {
+            director.broadcast(new InductiveCounterexampleMessage(Collections.singletonList(prop), F.size(),
+                    model, parent.getName()));
+        }
+    }
+
+    private void sendValidAndInvariants(List<Expr> invariants) {
+        Itinerary itinerary = director.getValidMessageItinerary();
+        director.broadcast(new ValidMessage(parent.getName(), prop, 1, invariants, null, itinerary));
 		director.broadcast(new InvariantMessage(invariants));
 	}
 

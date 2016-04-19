@@ -11,8 +11,8 @@ import jkind.solvers.Model;
 import jkind.translation.Specification;
 
 public class CounterexampleExtractor {
-	public static Counterexample extract(Specification spec, int k, Model model) {
-		return new CounterexampleExtractor(spec).extractCounterexample(k, model);
+	public static Counterexample extract(Specification spec, int k, Model model, String source) {
+		return new CounterexampleExtractor(spec).extractCounterexample(k, model, source);
 	}
 	
 	private final Specification spec;
@@ -21,8 +21,8 @@ public class CounterexampleExtractor {
 		this.spec = spec;
 	}
 
-	private Counterexample extractCounterexample(int k, Model model) {
-		Counterexample cex = new Counterexample(k);
+	private Counterexample extractCounterexample(int k, Model model, String source) {
+		Counterexample cex = new Counterexample(k, source);
 		for (String var : model.getVariableNames()) {
 			StreamIndex si = StreamIndex.decode(var);
 			if (si != null && si.getIndex() >= 0 && !isInternal(si.getStream())) {

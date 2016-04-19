@@ -197,6 +197,6 @@ public class RealizabilityDirector {
 	}
 
 	private Counterexample extractCounterexample(int k, Model model) {
-		return CounterexampleExtractor.extract(spec, k, model);
+		return CounterexampleExtractor.extract(spec, k, model, "realizability");
 	}
 }

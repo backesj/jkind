@@ -2,6 +2,7 @@ package jkind.api.results;
 
 import static java.util.stream.Collectors.toList;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
@@ -91,36 +92,36 @@ public abstract class Renaming {
 	}
 
 	/**
-	 * Rename unknown property and signals (if present), possibly omitting some
-	 * 
-	 * @param property
-	 *            Property to be renamed
-	 * @return Renamed version of the property, or <code>null</code> if there is
-	 *         no renaming for the property
-	 */
-	public UnknownProperty rename(UnknownProperty property) {
-		String name = rename(property.getName());
-		if (name == null) {
-			return null;
-		}
+     * Rename unknown property and signals (if present), possibly omitting some
+     * 
+     * @param property
+     *            Property to be renamed
+     * @return Renamed version of the property, or <code>null</code> if there is
+     *         no renaming for the property
+     */
+    public UnknownProperty rename(UnknownProperty property) {
+        String name = rename(property.getName());
+        if (name == null) {
+            return null;
+        }
 
-		return new UnknownProperty(name, property.getTrueFor(),
-				rename(property.getInductiveCounterexample()), property.getRuntime());
-	}
+        return new UnknownProperty(name, property.getTrueFor(),
+                rename(property.getInductiveCounterexamples()), property.getRuntime());
+    }
 
-	/**
-	 * Rename signals in a counterexample, possibly omitting some
-	 * 
-	 * @param cex
-	 *            Counterexample to be renamed
-	 * @return Renamed version of the counterexample
-	 */
+    /**
+     * Rename signals in a counterexample, possibly omitting some
+     * 
+     * @param cex
+     *            Counterexample to be renamed
+     * @return Renamed version of the counterexample
+     */
 	protected Counterexample rename(Counterexample cex) {
 		if (cex == null) {
 			return null;
 		}
 
-		Counterexample result = new Counterexample(cex.getLength());
+		Counterexample result = new Counterexample(cex.getLength(), cex.getSource());
 		for (Signal<Value> signal : cex.getSignals()) {
 			Signal<Value> newSignal = rename(signal);
 			if (newSignal != null) {
@@ -129,6 +130,21 @@ public abstract class Renaming {
 		}
 		return result;
 	}
+	
+	/**
+     * Rename a list of counterexamples
+     * 
+     * @param cexs
+     *            Counterexamples to be renamed
+     * @return Renamed versions of the counterexamples
+     */
+    protected List<Counterexample> rename(List<Counterexample> cexs) {
+        List<Counterexample> result = new ArrayList<>();
+        for(Counterexample cex : cexs){
+            result.add(rename(cex));
+        }
+        return result;
+    }
 
 	/**
 	 * Rename signal

@@ -98,4 +98,8 @@ public class PdrEngine extends Engine {
 		}
 		properties.removeAll(cancel);
 	}
+	
+	public JKindSettings getSettings(){
+	    return settings;
+	}
 }

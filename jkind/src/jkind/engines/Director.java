@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.UnaryOperator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -58,7 +59,7 @@ public class Director extends MessageHandler {
 	private final List<String> validProperties = new ArrayList<>();
 	private final List<String> invalidProperties = new ArrayList<>();
 	private int baseStep = 0;
-	private final Map<String, InductiveCounterexampleMessage> inductiveCounterexamples = new HashMap<>();
+	private final Map<String, List<InductiveCounterexampleMessage>> inductiveCounterexamples = new HashMap<>();
 
 	private final List<Engine> engines = new ArrayList<>();
 	private final List<Thread> threads = new ArrayList<>();
@@ -216,15 +217,22 @@ public class Director extends MessageHandler {
 	}
 
 	private boolean someEngineFailed() {
-		return engines.stream().anyMatch(e -> e.getThrowable() != null);
-	}
+        return engines.stream().anyMatch(e -> e.getThrowable() != null);
+    }
 
-	private void writeUnknowns() {
-		if (!remainingProperties.isEmpty()) {
-			writer.writeUnknown(remainingProperties, baseStep, convertInductiveCounterexamples(),
-					getRuntime());
-		}
-	}
+    private void writeUnknowns() {
+        if (!remainingProperties.isEmpty()) {
+            Map<String, List<Counterexample>> cexsMap = convertInductiveCounterexamples();
+            for (String prop : remainingProperties) {
+                List<Counterexample> cexList = cexsMap.get(prop);
+                if (cexList != null) {
+                    for (Counterexample cex : cexList) {
+                        writer.writeUnknown(prop, baseStep, cex, getRuntime());
+                    }
+                }
+            }
+        }
+    }
 
 	private int reportFailures() {
 		int exitCode = 0;
@@ -312,17 +320,23 @@ public class Director extends MessageHandler {
 		for (String invalidProp : newInvalid) {
 			SimpleModel slicedModel = ModelSlicer.slice(im.model,
 					analysisSpec.dependencyMap.get(invalidProp));
-			Counterexample cex = extractCounterexample(invalidProp, im.length, slicedModel, true);
+			Counterexample cex = extractCounterexample(invalidProp, im.length, slicedModel, im.source, true);
 			writer.writeInvalid(invalidProp, im.source, cex, Collections.emptyList(), runtime);
 		}
 	}
 
-	@Override
-	protected void handleMessage(InductiveCounterexampleMessage icm) {
-		for (String property : icm.properties) {
-			inductiveCounterexamples.put(property, icm);
-		}
-	}
+    @Override
+    protected void handleMessage(InductiveCounterexampleMessage icm) {
+        for (String property : icm.properties) {
+            List<InductiveCounterexampleMessage> cexs = inductiveCounterexamples.get(property);
+            if (cexs == null) {
+                cexs = new ArrayList<>();
+                inductiveCounterexamples.put(property, cexs);
+            }
+            cexs.add(icm);
+            cexs.removeIf(x -> x.source == icm.source && x.length < icm.length);
+        }
+    }
 
 	private final Map<String, Integer> bmcUnknowns = new HashMap<>();
 	private final Set<String> kInductionUnknowns = new HashSet<>();
@@ -357,8 +371,12 @@ public class Director extends MessageHandler {
 			int baseStep = entry.getKey();
 			List<String> unknowns = entry.getValue();
 			remainingProperties.removeAll(unknowns);
-			writer.writeUnknown(um.unknown, baseStep, convertInductiveCounterexamples(),
-					getRuntime());
+            Map<String, List<Counterexample>> cexsMap = convertInductiveCounterexamples();
+            for (String prop : um.unknown) {
+                for (Counterexample cex : cexsMap.get(prop)) {
+                    writer.writeUnknown(prop, baseStep, cex, getRuntime());
+                }
+            }
 			broadcast(new UnknownMessage(NAME, unknowns));
 		}
 	}
@@ -451,24 +469,27 @@ public class Director extends MessageHandler {
 		}
 	}
 
-	private Map<String, Counterexample> convertInductiveCounterexamples() {
-		Map<String, Counterexample> result = new HashMap<>();
+    private Map<String, List<Counterexample>> convertInductiveCounterexamples() {
+        Map<String, List<Counterexample>> result = new HashMap<>();
 
-		for (String prop : inductiveCounterexamples.keySet()) {
-			InductiveCounterexampleMessage icm = inductiveCounterexamples.get(prop);
-			SimpleModel slicedModel = ModelSlicer.slice(icm.model,
-					analysisSpec.dependencyMap.get(prop));
-			result.put(prop, extractCounterexample(prop, icm.length, slicedModel, false));
+        for (String prop : inductiveCounterexamples.keySet()) {
+            List<InductiveCounterexampleMessage> icms = inductiveCounterexamples.get(prop);
+            List<Counterexample> cexs = new ArrayList<>();
+            for (InductiveCounterexampleMessage icm : icms) {
+                SimpleModel slicedModel = ModelSlicer.slice(icm.model, analysisSpec.dependencyMap.get(prop));
+                cexs.add(extractCounterexample(prop, icm.length, slicedModel, icm.source, false));
+            }
+            result.put(prop, cexs);
 		}
 
 		return result;
 	}
 
-	private Counterexample extractCounterexample(String property, int k, SimpleModel model,
+	private Counterexample extractCounterexample(String property, int k, SimpleModel model, String source,
 			boolean concrete) {
 		if (settings.inline) {
 			ModelReconstructionEvaluator.reconstruct(userSpec, model, property, k, concrete);
 		}
-		return CounterexampleExtractor.extract(userSpec, k, model);
+		return CounterexampleExtractor.extract(userSpec, k, model, source);
 	}
 }

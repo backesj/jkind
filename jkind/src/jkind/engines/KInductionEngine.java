@@ -149,7 +149,7 @@ public class KInductionEngine extends SolverBasedEngine {
 
 	private void sendInductiveCounterexamples(List<String> properties, int length, Model model) {
 		if (settings.inductiveCounterexamples && properties.size() > 0) {
-			director.broadcast(new InductiveCounterexampleMessage(properties, length, model));
+			director.broadcast(new InductiveCounterexampleMessage(properties, length, model, getName()));
 		}
 	}
 

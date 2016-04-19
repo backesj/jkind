@@ -2,6 +2,7 @@ package jkind.engines.pdr;
 
 import static java.util.stream.Collectors.toList;
 
+import java.rmi.UnexpectedException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jkind.JKindException;
 import jkind.engines.StopException;
 import jkind.lustre.Expr;
 import jkind.lustre.Node;
@@ -230,6 +232,47 @@ public class PdrSmt extends ScriptUser {
 			throw new StopException();
 		}
 	}
+	
+	public jkind.solvers.Model getIndCex(){
+	    script.push(1);
+	    
+	    Term[] initVars = getVariables(StreamIndex.getSuffix(0), false);
+	    Term[] baseVars = getVariables("", false);
+        
+        
+        //asser the preinitial state
+        script.assertTerm(T(getVariables(StreamIndex.getSuffix(-1),false), initVars));
+        
+        //assert the transition relations
+        Term[] finalVars;
+        Term[] preVars = finalVars = initVars;
+        for(int i = 1; i < F.size(); i++){ 
+            //assert the frames leading up to the final 
+            for(int j = i; j < F.size(); j++){
+                Frame f = F.get(j);
+                script.assertTerm(subst(f.toTerm(script), baseVars, preVars));
+            }
+            Term[] curVars = getVariables(StreamIndex.getSuffix(i), false);
+            script.assertTerm(T(preVars, curVars));
+            preVars = finalVars = curVars;
+        }
+        script.assertTerm(not(subst(P, baseVars, finalVars)));
+        
+        switch (script.checkSat()) {
+        case UNSAT:
+            //the cube will be instantly blocked next round
+            script.pop(1);
+            return null;
+        case SAT:
+            SimpleModel extractedModel = extractModel(script.getModel(), F.size());
+            script.pop(1);
+            return extractedModel;
+
+        default:
+            commentUnknownReason();
+            throw new StopException();
+        }
+	}
 
 	private void commentUnknownReason() {
 		comment("SMT solver returned 'unknown' due to " + script.getInfo(":reason-unknown"));
@@ -373,20 +416,27 @@ public class PdrSmt extends ScriptUser {
 		return subst(P, base, vars);
 	}
 
-	public Term[] getVariables(String suffix) {
-		if (variableLists.containsKey(suffix)) {
-			return variableLists.get(suffix);
-		}
+    public Term[] getVariables(String suffix, boolean fCache) {
+        
+        if (variableLists.containsKey(suffix)) {
+            return variableLists.get(suffix);
+        }
 
-		Term[] result = new Term[varDecls.size()];
-		for (int i = 0; i < varDecls.size(); i++) {
-			VarDecl vd = varDecls.get(i);
-			String name = vd.id + suffix;
-			result[i] = declareVar(name, vd.type);
-		}
-		variableLists.put(suffix, result);
+        Term[] result = new Term[varDecls.size()];
+        for (int i = 0; i < varDecls.size(); i++) {
+            VarDecl vd = varDecls.get(i);
+            String name = vd.id + suffix;
+            result[i] = declareVar(name, vd.type);
+        }
+        if (fCache) {
+            variableLists.put(suffix, result);
+        }
 		return result;
 	}
+	
+	public Term[] getVariables(String suffix) {
+        return getVariables(suffix, true);
+    }
 
 	private Term declareVar(String name, Type type) {
 		Sort sort = getSort(type);

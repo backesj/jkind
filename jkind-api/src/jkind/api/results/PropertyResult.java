@@ -1,6 +1,7 @@
 package jkind.api.results;
 
 import jkind.JKindException;
+import jkind.results.Counterexample;
 import jkind.results.InvalidProperty;
 import jkind.results.Property;
 import jkind.results.UnknownProperty;
@@ -46,12 +47,23 @@ public class PropertyResult extends AnalysisResult {
 	}
 
 	public void setProperty(Property original) {
+	    Property renamed = null;
 		if (renaming == null) {
-			property = original;
+			renamed = original;
 		} else {
-			property = renaming.rename(original);
+			renamed = renaming.rename(original);
 		}
 
+		//if the property already exists update the counterexample
+		if(property != null && property instanceof UnknownProperty && renamed instanceof UnknownProperty){
+		    UnknownProperty renamedUnknown = (UnknownProperty)renamed;
+		    for(Counterexample cex : renamedUnknown.getInductiveCounterexamples()){
+		        ((UnknownProperty)property).addInductiveCounterexample(cex);
+		    }
+		}else{
+		    property = renamed;
+		}
+		
 		if (property instanceof ValidProperty) {
 			if (invalidInPast) {
 				if (invertStatus) {

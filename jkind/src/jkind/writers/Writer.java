@@ -18,8 +18,8 @@ public abstract class Writer {
 	public abstract void writeInvalid(String prop, String source, Counterexample cex,
 			List<String> conflicts, double runtime);
 
-	public abstract void writeUnknown(List<String> props, int trueFor,
-			Map<String, Counterexample> inductiveCounterexamples, double runtime);
+	public abstract void writeUnknown(String prop, int trueFor,
+			Counterexample inductiveCounterexample, double runtime);
 
 	public abstract void writeBaseStep(List<String> props, int k);
 }
