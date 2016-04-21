@@ -27,6 +27,7 @@ public class JKindApi extends KindApi {
 	protected boolean ivcReduction = false;
 	protected boolean smoothCounterexamples = false;
 	protected boolean intervalGeneralization = false;
+	protected boolean pdrInvariants = false;
 
 	protected SolverOption solver = null;
 
@@ -46,6 +47,11 @@ public class JKindApi extends KindApi {
 		this.n = n;
 	}
 
+	public void setPdrInvariants(){
+	    pdrInvariants = true;
+	}
+	
+	
 	public void disableBoundedModelChecking() {
 		boundedModelChecking = false;
 	}
@@ -181,6 +187,9 @@ public class JKindApi extends KindApi {
 		if (solver != null) {
 			args.add("-solver");
 			args.add(solver.toString());
+		}
+		if(pdrInvariants){
+		    args.add("-pdr_inv");
 		}
 
 		args.add(lustreFile.toString());

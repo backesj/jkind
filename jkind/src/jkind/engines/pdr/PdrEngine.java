@@ -19,6 +19,7 @@ import jkind.engines.messages.ValidMessage;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
 import jkind.lustre.IdExpr;
+import jkind.lustre.VarDecl;
 import jkind.translation.ContainsTemporalOperator;
 import jkind.translation.Specification;
 
@@ -120,6 +121,11 @@ public class PdrEngine extends Engine {
 			if (eq.lhs.get(0).id.equals(valid)) {
 				return eq.expr;
 			}
+		}
+		for(VarDecl var : this.spec.node.inputs){
+		    if(var.id.equals(valid)){
+		        return new IdExpr(valid);
+		    }
 		}
 		throw new IllegalArgumentException("Failed to find property: " + valid);
 	}

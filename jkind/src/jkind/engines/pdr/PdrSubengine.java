@@ -214,6 +214,7 @@ public class PdrSubengine extends Thread {
 
 	private void addFrame(Frame frame) {
 		F.add(F.size() - 1, frame);
+		System.out.println("Num PDR Frames: "+F.size());
 	}
 
 	private List<Expr> propogateBlockedCubes() {

@@ -7,7 +7,7 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="jkind.Main"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-jkind -solver z3 -induct_cex -no_inv_gen test.lus -timeout 10"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-jkind -solver z3 -induct_cex  test2.lus -timeout 20000 -pdr_inv"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="jkind"/>
 <stringAttribute key="yk-options" value="&#13;&#10;additional-options2=onexit\=snapshot&#13;&#10;"/>
 </launchConfiguration>
