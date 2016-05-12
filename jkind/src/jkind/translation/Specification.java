@@ -14,7 +14,7 @@ public class Specification {
 	public final DependencyMap dependencyMap;
 	public final Map<String, Type> typeMap;
 	private Relation transitionRelation;
-	private Relation supportTransitionRelation;
+	private Relation ivcTransitionRelation;
 
 	public Specification(Node raw) {
 		this.dependencyMap = new DependencyMap(raw, raw.properties);
@@ -37,11 +37,11 @@ public class Specification {
 		return transitionRelation;
 	}
 
-	public Relation getSupportTransitionRelation() {
-		if (supportTransitionRelation == null) {
-			supportTransitionRelation = Lustre2Sexp.constructSupportTransitionRelation(node);
+	public Relation getIvcTransitionRelation() {
+		if (ivcTransitionRelation == null) {
+			ivcTransitionRelation = Lustre2Sexp.constructIvcTransitionRelation(node);
 		}
-		return supportTransitionRelation;
+		return ivcTransitionRelation;
 	}
 	
 }

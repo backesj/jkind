@@ -75,6 +75,7 @@ import jkind.lustre.parsing.LustreParser.InductTermContext;
 import jkind.lustre.parsing.LustreParser.InductTypeContext;
 import jkind.lustre.parsing.LustreParser.IntExprContext;
 import jkind.lustre.parsing.LustreParser.IntTypeContext;
+import jkind.lustre.parsing.LustreParser.IvcContext;
 import jkind.lustre.parsing.LustreParser.LhsContext;
 import jkind.lustre.parsing.LustreParser.NegateExprContext;
 import jkind.lustre.parsing.LustreParser.NodeCallExprContext;
@@ -96,7 +97,6 @@ import jkind.lustre.parsing.LustreParser.RecordUpdateExprContext;
 import jkind.lustre.parsing.LustreParser.RecursiveContext;
 import jkind.lustre.parsing.LustreParser.RequireContext;
 import jkind.lustre.parsing.LustreParser.SubrangeTypeContext;
-import jkind.lustre.parsing.LustreParser.SupportContext;
 import jkind.lustre.parsing.LustreParser.TopLevelTypeContext;
 import jkind.lustre.parsing.LustreParser.TupleExprContext;
 import jkind.lustre.parsing.LustreParser.TypeContext;
@@ -158,14 +158,18 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		List<Equation> equations = equations(ctx.equation());
 		List<String> properties = properties(ctx.property());
 		List<Expr> assertions = assertions(ctx.assertion());
-		List<String> support = support(ctx.support());
+		List<String> ivc = ivc(ctx.ivc());
 		List<String> realizabilityInputs = realizabilityInputs(ctx.realizabilityInputs());
 		Contract contract = null;
-		if (!ctx.main().isEmpty()) {
-            main = id;
+        if (!ctx.main().isEmpty()) {
+            if (main == null) {
+                main = id;
+            } else {
+                fatal(ctx.main(0), "node '" + main + "' already declared as --%MAIN");
+            }
         }
         return new Node(loc(ctx), id, inputs, outputs, locals, equations, properties, assertions,
-                realizabilityInputs, contract, support);
+                realizabilityInputs, contract, ivc);
     }
 
     private List<RecursiveFunction> recursives(List<RecursiveContext> ctxs) {
@@ -187,6 +191,7 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
         }
         return new RecursiveFunction(loc(ctx), id, inputs, locals, outputs.get(0), equations);
     }
+
 
 	private List<VarDecl> varDecls(VarDeclListContext listCtx) {
 		List<VarDecl> decls = new ArrayList<>();
@@ -278,13 +283,13 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 
 		return null;
 	}
-	
-	private List<String> support(List<SupportContext> ctxs) {
+
+	private List<String> ivc(List<IvcContext> ctxs) {
 		if (ctxs.size() > 1) {
-			fatal(ctxs.get(1), "at most one support statement allowed");
+			fatal(ctxs.get(1), "at most one ivc statement allowed per node");
 		}
 
-		for (SupportContext ctx : ctxs) {
+		for (IvcContext ctx : ctxs) {
 			List<String> ids = new ArrayList<>();
 			for (TerminalNode ictx : ctx.ID()) {
 				ids.add(ictx.getText());

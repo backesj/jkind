@@ -40,6 +40,8 @@ public abstract class SolverBasedEngine extends Engine {
 		try {
 			initializeSolver();
 			super.run();
+		} catch (Throwable t) {
+			throwable = t;
 		} finally {
 			if (solver != null) {
 				solver.stop();

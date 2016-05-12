@@ -1,12 +1,19 @@
 package jkind.engines.pdr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import jkind.JKindSettings;
 import jkind.engines.Director;
 import jkind.engines.StopException;
+import jkind.engines.messages.InductiveCounterexampleMessage;
+import jkind.advice.VariableUsageChecker;
+import jkind.engines.invariant.InvariantSet;
 import jkind.engines.messages.InvalidMessage;
 import jkind.engines.messages.InvariantMessage;
 import jkind.engines.messages.Itinerary;
@@ -18,6 +25,7 @@ import jkind.lustre.builders.NodeBuilder;
 import jkind.slicing.LustreSlicer;
 import jkind.solvers.Model;
 import jkind.translation.Specification;
+import jkind.util.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -39,17 +47,40 @@ public class PdrSubengine extends Thread {
 	private final PdrSmt Z;
 
 	private volatile boolean cancel = false;
+	private final BlockingQueue<Expr> incomingInvariants = new LinkedBlockingQueue<>();
+	private final InvariantSet invariants = new InvariantSet();
+	private VariableUsageChecker variableUsageChecker;
+	private final List<Expr> initialInvariants;
 
-	public PdrSubengine(String prop, Specification spec, String scratchBase, PdrEngine parent,
-			Director director) {
+	public PdrSubengine(String prop, List<Expr> initialInvariants, Specification spec,
+			String scratchBase, PdrEngine parent, Director director) {
 		super("pdr-" + prop);
 		this.prop = prop;
+		this.initialInvariants = initialInvariants;
 		Node single = new NodeBuilder(spec.node).clearProperties().addProperty(prop).build();
 		this.node = LustreSlicer.slice(single, spec.dependencyMap);
 		this.parent = parent;
 		this.director = director;
 
 		this.Z = new PdrSmt(node, F, prop, scratchBase);
+
+		this.variableUsageChecker = new VariableUsageChecker(Util.getVarDecls(node));
+	}
+
+	private void tryAddInvariants(List<Expr> invs) {
+		for (Expr inv : invs) {
+			if (variableUsageChecker.check(inv)) {
+				if (invariants.add(inv)) {
+					Z.addInvariant(inv);
+				}
+			}
+		}
+	}
+
+	public void recieveInvariants(List<Expr> invs) {
+		for (Expr inv : invs) {
+			incomingInvariants.add(inv);
+		}
 	}
 
 	public void cancel() {
@@ -58,11 +89,13 @@ public class PdrSubengine extends Thread {
 
 	@Override
 	public void run() {
+        JKindSettings settings = parent.getSettings();
 		Z.comment("Checking property: " + prop);
 
 		// Create F_INF and F[0]
 		F.add(new Frame());
 		addFrame(Z.createInitialFrame());
+		tryAddInvariants(initialInvariants);
 
 		try {
 			while (true) {
@@ -77,6 +110,9 @@ public class PdrSubengine extends Thread {
 						sendValidAndInvariants(invariants);
 						return;
 					}
+					if(settings.inductiveCounterexamples){
+                        reportInductCex();
+                    }
 				}
 			}
 		} catch (CounterexampleException cex) {
@@ -92,12 +128,13 @@ public class PdrSubengine extends Thread {
 		}
 	}
 
-	private void blockCube(TCube s0) {
+    private void blockCube(TCube s0) {
 		PriorityQueue<TCube> Q = new PriorityQueue<>();
 		Q.add(s0);
 
 		while (!Q.isEmpty()) {
 			checkCancel();
+			checkNewInvariants();
 			TCube s = Q.poll();
 
 			if (s.getFrame() == 0) {
@@ -138,6 +175,14 @@ public class PdrSubengine extends Thread {
 		}
 	}
 
+	private void checkNewInvariants() {
+		if (!incomingInvariants.isEmpty()) {
+			List<Expr> drain = new ArrayList<>();
+			incomingInvariants.drainTo(drain);
+			tryAddInvariants(drain);
+		}
+	}
+
 	private boolean isBlocked(TCube s) {
 		// Check syntactic subsumption (faster than SAT):
 		for (int d = s.getFrame(); d < F.size(); d++) {
@@ -169,12 +214,14 @@ public class PdrSubengine extends Thread {
 
 	private void addFrame(Frame frame) {
 		F.add(F.size() - 1, frame);
+		System.out.println("Num PDR Frames: "+F.size());
 	}
 
 	private List<Expr> propogateBlockedCubes() {
 		for (int k = 1; k < depth(); k++) {
 			for (Cube c : new ArrayList<>(F.get(k).getCubes())) {
 				checkCancel();
+				checkNewInvariants();
 				TCube s = Z.solveRelative(new TCube(c, k + 1), Option.NO_IND);
 				if (s.getFrame() != TCube.FRAME_NULL) {
 					addBlockedCube(s);
@@ -237,11 +284,19 @@ public class PdrSubengine extends Thread {
 			curr = curr.getNext();
 		}
 		return result;
-	}
+    }
 
-	private void sendValidAndInvariants(List<Expr> invariants) {
-		Itinerary itinerary = director.getValidMessageItinerary();
-		director.broadcast(new ValidMessage(parent.getName(), prop, 1, invariants, null, itinerary));
+    private void reportInductCex() {
+        Model model = Z.getIndCex();
+        if (model != null) {
+            director.broadcast(new InductiveCounterexampleMessage(Collections.singletonList(prop), F.size(),
+                    model, parent.getName()));
+        }
+    }
+
+    private void sendValidAndInvariants(List<Expr> invariants) {
+        Itinerary itinerary = director.getValidMessageItinerary();
+        director.broadcast(new ValidMessage(parent.getName(), prop, 1, invariants, null, itinerary));
 		director.broadcast(new InvariantMessage(invariants));
 	}
 

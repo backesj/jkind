@@ -281,4 +281,10 @@ public class Lustre2Term extends ScriptUser implements ExprVisitor<Term> {
 		throw new JKindException("PDR does not support quantifiers");
 	}
 
+	public Term encodeInvariant(Expr inv) {
+		pre = true;
+		Term tInv = inv.accept(this);
+		pre = false;
+		return tInv;
+	}
 }

@@ -45,14 +45,14 @@ public class XmlWriter extends Writer {
 
 	@Override
 	public void writeValid(List<String> props, String source, int k, double runtime,
-			List<Expr> invariants, Set<String> support) {
+			List<Expr> invariants, Set<String> ivc) {
 		for (String prop : props) {
-			writeValid(prop, source, k, runtime, invariants, support);
+			writeValid(prop, source, k, runtime, invariants, ivc);
 		}
 	}
 
 	public void writeValid(String prop, String source, int k, double runtime,
-			List<Expr> invariants, Set<String> support) {
+			List<Expr> invariants, Set<String> ivc) {
 		out.println("  <Property name=\"" + prop + "\">");
 		out.println("    <Runtime unit=\"sec\">" + runtime + "</Runtime>");
 		out.println("    <Answer source=\"" + source + "\">valid</Answer>");
@@ -60,8 +60,8 @@ public class XmlWriter extends Writer {
 		for (Expr invariant : invariants) {
 			out.println("    <Invariant>" + escape(invariant) + "</Invariant>");
 		}
-		for (String supp : support) {
-			out.println("    <Support>" + supp + "</Support>");
+		for (String supp : ivc) {
+			out.println("    <Ivc>" + supp + "</Ivc>");
 		}
 		out.println("  </Property>");
 		out.flush();
@@ -96,21 +96,21 @@ public class XmlWriter extends Writer {
 		out.println("    </Conflicts>");
 	}
 
-	private void writeUnknown(String prop, int trueFor, Counterexample cex, double runtime) {
-		out.println("  <Property name=\"" + prop + "\">");
-		out.println("    <Runtime unit=\"sec\">" + runtime + "</Runtime>");
-		out.println("    <Answer>unknown</Answer>");
-		out.println("    <TrueFor>" + trueFor + "</TrueFor>");
-		if (cex != null) {
-			out.println("    <K>" + cex.getLength() + "</K>");
-			writeCounterexample(cex);
-		}
-		out.println("  </Property>");
-		out.flush();
-	}
+	@Override
+    public void writeUnknown(String prop, int trueFor, Counterexample cex, double runtime) {
+        out.println("  <Property name=\"" + prop + "\">");
+        out.println("    <Runtime unit=\"sec\">" + runtime + "</Runtime>");
+        out.println("    <Answer>unknown</Answer>");
+        out.println("    <TrueFor>" + trueFor + "</TrueFor>");
+        out.println("    <K>" + cex.getLength() + "</K>");
+        writeCounterexample(cex);
+
+        out.println("  </Property>");
+        out.flush();
+    }
 
 	private void writeCounterexample(Counterexample cex) {
-		out.println("    <Counterexample>");
+		out.println("    <Counterexample source=\""+cex.getSource()+"\">");
 		for (Signal<Value> signal : cex.getSignals()) {
 			writeSignal(cex.getLength(), signal);
 		}
@@ -151,14 +151,7 @@ public class XmlWriter extends Writer {
 		}
 	}
 
-	@Override
-	public void writeUnknown(List<String> props, int trueFor,
-			Map<String, Counterexample> inductiveCounterexamples, double runtime) {
-		for (String prop : props) {
-			writeUnknown(prop, trueFor, inductiveCounterexamples.get(prop), runtime);
-		}
-	}
-
+	
 	@Override
 	public void writeBaseStep(List<String> props, int k) {
 		out.println("  <Progress source=\"bmc\" trueFor=\"" + k + "\">");

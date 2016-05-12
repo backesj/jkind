@@ -6,18 +6,20 @@ import jkind.solvers.Model;
 import jkind.util.Util;
 
 public class InductiveCounterexampleMessage extends Message {
-	public final List<String> properties;
-	public final int length;
-	public final Model model;
+    public final List<String> properties;
+    public final int length;
+    public final Model model;
+    public final String source;
 
-	public InductiveCounterexampleMessage(List<String> properties, int length, Model model) {
-		this.properties = Util.safeList(properties);
-		this.length = length;
-		this.model = model;
-	}
+    public InductiveCounterexampleMessage(List<String> properties, int length, Model model, String source) {
+        this.properties = Util.safeList(properties);
+        this.length = length;
+        this.model = model;
+        this.source = source;
+    }
 
-	@Override
-	public void accept(MessageHandler handler) {
-		handler.handleMessage(this);
-	}
+    @Override
+    public void accept(MessageHandler handler) {
+        handler.handleMessage(this);
+    }
 }

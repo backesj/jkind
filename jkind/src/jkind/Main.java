@@ -39,7 +39,8 @@ import org.antlr.v4.runtime.RecognitionException;
  * runnable JARs allow only a single entry point.
  */
 public class Main {
-	public static final String VERSION = "2.3-induct";
+
+	public static final String VERSION = "3.0.1-kind2-arrays";
 
 	public static void main(String[] args) {
 		String availableEntryPoints = "Available entry points: -jkind, -jlustre2kind, -jlustre2excel, -jrealizability, -benchmark";

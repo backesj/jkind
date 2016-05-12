@@ -53,7 +53,7 @@ public class InductiveDataTypeSpecification extends Specification{
 			}
 		}
 		return new Node(node.location, node.id, node.inputs, node.outputs, node.locals, 
-    			newEqs, node.properties, node.assertions, node.realizabilityInputs, node.contract, node.support);
+    			newEqs, node.properties, node.assertions, node.realizabilityInputs, node.contract, node.ivc);
     }
 
 	private void setPropertyExprs(Node node) {

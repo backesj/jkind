@@ -22,8 +22,9 @@ public class JKindArgumentParser extends ArgumentParser {
 	private static final String NO_INV_GEN = "no_inv_gen";
 	private static final String NO_K_INDUCTION = "no_k_induction";
 	private static final String PDR_MAX = "pdr_max";
+	private static final String PDR_INV = "pdr_inv";
 	private static final String READ_ADVICE = "read_advice";
-	private static final String SUPPORT = "support";
+	private static final String IVC = "ivc";
 	private static final String SCRATCH = "scratch";
 	private static final String SMOOTH = "smooth";
 	private static final String SOLVER = "solver";
@@ -49,14 +50,16 @@ public class JKindArgumentParser extends ArgumentParser {
 		options.addOption(EXCEL, false, "generate results in Excel format");
 		options.addOption(INDUCT_CEX, false, "generate inductive counterexamples");
 		options.addOption(INTERVAL, false, "generalize counterexamples using interval analysis");
+		options.addOption(IVC, false,
+				"find an inductive validity core for valid properties (based on --%IVC annotated elements)");
 		options.addOption(N, true, "maximum depth for bmc and k-induction (default: 200)");
 		options.addOption(NO_BMC, false, "disable bounded model checking");
 		options.addOption(NO_INV_GEN, false, "disable invariant generation");
 		options.addOption(NO_K_INDUCTION, false, "disable k-induction");
 		options.addOption(PDR_MAX, true,
 				"maximum number of PDR parallel instances (0 to disable PDR)");
+		options.addOption(PDR_INV, false, "use invariants with pdr");
 		options.addOption(READ_ADVICE, true, "read advice from specified file");
-		options.addOption(SUPPORT, false, "find a set of support and reduce invariants used");
 		options.addOption(SCRATCH, false, "produce files for debugging purposes");
 		options.addOption(SMOOTH, false, "smooth counterexamples (minimal changes in input values)");
 		options.addOption(SOLVER, true,
@@ -121,12 +124,16 @@ public class JKindArgumentParser extends ArgumentParser {
 			settings.pdrMax = Math.max(1, heuristic);
 		}
 
+		if (line.hasOption(PDR_INV)) {
+			settings.pdrInv = true;
+		}
+
 		if (line.hasOption(READ_ADVICE)) {
 			settings.readAdvice = line.getOptionValue(READ_ADVICE);
 		}
 
-		if (line.hasOption(SUPPORT)) {
-			settings.reduceSupport = true;
+		if (line.hasOption(IVC)) {
+			settings.reduceIvc = true;
 		}
 
 		if (line.hasOption(TIMEOUT)) {
@@ -184,10 +191,10 @@ public class JKindArgumentParser extends ArgumentParser {
 	}
 
 	private void checkSettings() {
-		if (settings.reduceSupport) {
+		if (settings.reduceIvc) {
 			if (settings.solver == SolverOption.CVC4 || settings.solver == SolverOption.YICES2) {
 				Output.warning(settings.solver
-						+ " does not support unsat-cores so support reduction will be slow");
+						+ " does not support unsat-cores so IVC reduction will be slow");
 			}
 		}
 

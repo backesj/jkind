@@ -48,8 +48,7 @@ public class XmlWriter extends Writer {
 
 	@Override
 	public void writeUnknown(int trueFor, Counterexample cex, double runtime) {
-		Map<String, Counterexample> map = Collections.singletonMap(Util.REALIZABLE, cex);
-		internal.writeUnknown(REALIZABLE_LIST, trueFor, map, runtime);
+		internal.writeUnknown(Util.REALIZABLE, trueFor, cex, runtime);
 		summaryWriter.writeUnknown(trueFor, cex, runtime);
 	}
 }

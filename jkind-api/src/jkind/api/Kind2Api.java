@@ -11,6 +11,7 @@ import jkind.api.kind2.WorkaroundKind2ForwardReference;
 import jkind.api.results.JKindResult;
 import jkind.api.xml.XmlParseThread;
 import jkind.lustre.Program;
+import jkind.lustre.visitors.Kind2ArraysPrettyPrintVisitor;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -35,11 +36,10 @@ public class Kind2Api extends KindApi {
 	@Override
 	public void execute(Program program, JKindResult result, IProgressMonitor monitor) {
 		program = WorkaroundKind2ForwardReference.program(program);
-		Kind2PrettyPrintVisitor kind2Printer = new Kind2PrettyPrintVisitor();
+		Kind2ArraysPrettyPrintVisitor kind2Printer = new Kind2ArraysPrettyPrintVisitor();
 		program.accept(kind2Printer);
 		System.out.println(kind2Printer.toString());
 		execute(kind2Printer.toString(), result, monitor);
-
 	}
 	
 	/**

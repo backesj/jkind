@@ -23,9 +23,11 @@ import jkind.util.CounterexampleFormatter;
 public final class Counterexample {
 	private final int length;
 	private final Map<String, Signal<Value>> signals = new HashMap<>();
-
-	public Counterexample(int length) {
+	private String source = null;
+	
+	public Counterexample(int length, String source) {
 		this.length = length;
+		this.source = source;
 	}
 
 	/**
@@ -193,4 +195,9 @@ public final class Counterexample {
 	public String toString(Layout layout) {
 		return new CounterexampleFormatter(this, layout).toString();
 	}
+	
+	public String getSource(){
+	    return source;
+	}
+	
 }
