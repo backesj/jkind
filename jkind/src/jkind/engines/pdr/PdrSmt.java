@@ -56,7 +56,7 @@ public class PdrSmt extends ScriptUser {
 		super(SmtInterpolUtil.getScript(scratchBase));
 		this.F = F;
 
-		script.setOption(":random-seed", 2);
+		script.setOption(":random-seed", 576234);
 		script.setOption(":produce-interpolants", true);
 		script.setOption(":produce-unsat-cores", true);
 		script.setOption(":simplify-interpolants", true);
