@@ -269,7 +269,7 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 	        return null;
 	    }
 	
-	private void varDecls(List<VarDecl> varDecls) {
+	protected void varDecls(List<VarDecl> varDecls) {
 		Iterator<VarDecl> iterator = varDecls.iterator();
 		while (iterator.hasNext()) {
 			write("  ");
