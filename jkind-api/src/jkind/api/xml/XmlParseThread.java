@@ -166,12 +166,11 @@ public class XmlParseThread extends Thread {
 		}
 	}
 
-	private PropertyResult getOrAddProperty(String analysis, String propName) {
-		PropertyResult pr = result.getPropertyResult(propName);
-		if (pr == null && analysis != null) {
-			propName = analysis + propName;
-			pr = result.getPropertyResult(propName);
-		}
+	private PropertyResult getOrAddProperty(String analysis, String propName) { 
+	    if(backend == Backend.KIND2){
+	        propName = analysis + "." + propName;
+	    }
+	    PropertyResult pr = result.getPropertyResult(propName);
 		if (pr == null) {
 			pr = result.addProperty(propName);
 		}
@@ -188,14 +187,19 @@ public class XmlParseThread extends Thread {
 		List<String> invariants = getStringList(getElements(propertyElement, "Invariant"));
 		List<String> ivc = getStringList(getElements(propertyElement, "Ivc"));
 		List<String> conflicts = getConflicts(getElement(propertyElement, "Conflicts"));
-		Counterexample cex = getCounterexample(getElement(propertyElement, "Counterexample"), k);
+		Counterexample cex = getCounterexample(propertyElement, k);
 
 		switch (answer) {
 		case "valid":
 			return new ValidProperty(name, source, k, runtime, invariants, ivc);
 
 		case "falsifiable":
-			return new InvalidProperty(name, source, cex, conflicts, runtime);
+		    //kind2 decided to do things differently...
+            if (backend == Backend.KIND2 && getElement(propertyElement, "InductionCounterexample") != null) {
+                return new UnknownProperty(name, trueFor, cex, runtime);
+            }else{
+                return new InvalidProperty(name, source, cex, conflicts, runtime);
+            }
 
 		case "unknown":
 			return new UnknownProperty(name, trueFor, cex, runtime);
@@ -263,19 +267,55 @@ public class XmlParseThread extends Thread {
 		return conflicts;
 	}
 
-	private Counterexample getCounterexample(Element cexElement, int k) {
+	private Counterexample getCounterexample(Element propElement, int k) {
+	    
+	    Element cexElement = getElement(propElement, "Counterexample");
+	    if(cexElement == null){
+	        cexElement = getElement(propElement, "InductionCounterexample");
+	    }
+	    
 		if (cexElement == null) {
 			return null;
-		}
-		
-		String source = cexElement.getAttribute("source");
-
-		Counterexample cex = new Counterexample(k, source);
-		for (Element signalElement : getElements(cexElement, getSignalTag())) {
-			cex.addSignal(getSignal(signalElement));
-		}
-		return cex;
+        }
+        switch (backend) {
+        case JKIND:
+            return getJKindCounterexample(cexElement, k);
+        case KIND2:
+            Element answerElement = getElement(propElement, "Answer");
+            String source = answerElement.getAttribute("source");
+            return getKind2Counterexample(cexElement, source, k);
+        default:
+            throw new IllegalArgumentException();
+        }
 	}
+	
+	private Counterexample getJKindCounterexample(Element cexElement, int k) {
+        String source = cexElement.getAttribute("source");
+        Counterexample cex = new Counterexample(k, source);
+        for (Element signalElement : getElements(cexElement, getSignalTag())) {
+            cex.addSignal(getSignal(signalElement));
+        }
+        return cex;
+    }
+	
+	private Counterexample getKind2Counterexample(Element cexElement, String source, int k) {
+        Counterexample cex = new Counterexample(k, source);
+        for (Element nodeElement : getElements(cexElement, "Node")) {
+            String nodeName = nodeElement.getAttribute("name");
+
+            if (nodeName == null) {
+                nodeName = "";
+            } else {
+                nodeName += ".";
+            }
+            for (Element signalElement : getChildren(nodeElement, getSignalTag())) {
+                Signal<Value> signal = getSignal(signalElement);
+                signal = signal.rename(nodeName + signal.getName());
+                cex.addSignal(signal);
+            }
+        }
+        return cex;
+    }
 
 	protected String getSignalTag() {
 		switch (backend) {
@@ -405,6 +445,20 @@ public class XmlParseThread extends Thread {
 		return (Element) element.getElementsByTagName(name).item(0);
 	}
 
+    private List<Element> getChildren(Element element, String name) {
+        List<Element> elements = new ArrayList<>();
+        NodeList nodeList = element.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            if (nodeList.item(i) instanceof Element) {
+                Element item = (Element) nodeList.item(i);
+                if (item.getNodeName().equals(name)) {
+                    elements.add(item);
+                }
+            }
+        }
+        return elements;
+    }
+	
 	private List<Element> getElements(Element element, String name) {
 		List<Element> elements = new ArrayList<>();
 		NodeList nodeList = element.getElementsByTagName(name);

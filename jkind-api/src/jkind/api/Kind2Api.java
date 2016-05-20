@@ -123,6 +123,12 @@ public class Kind2Api extends KindApi {
 		List<String> args = new ArrayList<>();
 		args.add("-xml");
 		args.add("-v");
+		args.add("--ind_print_cex");
+		args.add("on");
+		args.add("--compositional");
+		args.add("on");
+        args.add("--modular");
+        args.add("on");
 		if (timeout != null) {
 			args.add("--timeout_wall");
 			args.add(timeout.toString());
