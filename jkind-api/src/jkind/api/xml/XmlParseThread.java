@@ -15,6 +15,7 @@ import jkind.JKindException;
 import jkind.api.Backend;
 import jkind.api.results.JKindResult;
 import jkind.api.results.PropertyResult;
+import jkind.api.results.Status;
 import jkind.interval.IntEndpoint;
 import jkind.interval.Interval;
 import jkind.interval.NumericEndpoint;
@@ -99,6 +100,12 @@ public class XmlParseThread extends Thread {
 				} else if (beginAnalysis) {
 					analysis = parseKind2AnalysisXml(line);
 				} else if (endAnalysis) {
+				    List<PropertyResult> prs = analysisToProps.get(analysis);
+				    for(PropertyResult pr : prs){
+				        if(pr.getProperty() instanceof UnknownProperty){
+				            pr.setStatus(Status.UNKNOWN);
+				        }
+				    }
 					analysis = null;
 				} else if (buffer != null) {
 					buffer.append(line);
@@ -164,17 +171,17 @@ public class XmlParseThread extends Thread {
 				analysisToProps.get(analysis).add(pr);
 			}
 		}
-	}
+    }
 
-	private PropertyResult getOrAddProperty(String analysis, String propName) { 
-	    if(backend == Backend.KIND2){
-	        propName = analysis + "." + propName;
-	    }
-	    PropertyResult pr = result.getPropertyResult(propName);
-		if (pr == null) {
-			pr = result.addProperty(propName);
-		}
-		return pr;
+    private PropertyResult getOrAddProperty(String analysis, String propName) {
+        if (backend == Backend.KIND2) {
+            propName = analysis + "." + propName;
+        }
+        PropertyResult pr = result.getPropertyResult(propName);
+        if (pr == null) {
+            pr = result.addProperty(propName);
+        }
+        return pr;
 	}
 
 	private Property getProperty(Element propertyElement) {

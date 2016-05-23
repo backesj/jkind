@@ -24,11 +24,11 @@ import jkind.results.layout.SingletonLayout;
  * @see PropertyResult
  */
 public class JKindResult extends AnalysisResult implements PropertyChangeListener {
-	private String text;
-	private final List<PropertyResult> propertyResults = new ArrayList<>();
-	private final MultiStatus multiStatus = new MultiStatus();
-	private Ticker ticker;
-	private Renaming renaming;
+    protected String text;
+	protected final List<PropertyResult> propertyResults = new ArrayList<>();
+	protected final MultiStatus multiStatus = new MultiStatus();
+	protected Ticker ticker;
+	protected Renaming renaming;
 
 	/**
 	 * Construct an empty JKindResult to hold the results of a run of JKind
@@ -144,8 +144,8 @@ public class JKindResult extends AnalysisResult implements PropertyChangeListene
 	public PropertyResult addProperty(String property) {
 		return addProperty(property, false);
 	}
-
-	private void addStatus(Status other) {
+	
+	protected void addStatus(Status other) {
 		multiStatus.add(other);
 		pcs.firePropertyChange("status", null, other);
 	}

@@ -8,14 +8,14 @@ import jkind.results.UnknownProperty;
 import jkind.results.ValidProperty;
 
 public class PropertyResult extends AnalysisResult {
-	private Property property;
-	private final Renaming renaming;
-	private boolean invertStatus = false;
-	private boolean invalidInPast = false;
+	protected Property property;
+	protected final Renaming renaming;
+	protected boolean invertStatus = false;
+	protected boolean invalidInPast = false;
 
-	private int elapsed;
-	private int baseProgress;
-	private Status status;
+	protected int elapsed;
+	protected int baseProgress;
+	protected Status status;
 
 	public PropertyResult(String name, Renaming renaming, boolean invertStatus) {
 		this(name, renaming);
@@ -108,7 +108,7 @@ public class PropertyResult extends AnalysisResult {
 		}
 	}
 
-	private void setStatus(Status status) {
+	public void setStatus(Status status) {
 		if (this.status == Status.INVALID) {
 			invalidInPast = true;
 		}
