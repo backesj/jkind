@@ -109,7 +109,8 @@ public class PropertyResult extends AnalysisResult {
 	}
 
 	public void setStatus(Status status) {
-		if (this.status == Status.INVALID) {
+		if (this.status == Status.INVALID ||
+		        status == Status.INVALID) {
 			invalidInPast = true;
 		}
 		pcs.firePropertyChange("status", this.status, this.status = status);
