@@ -129,6 +129,8 @@ public class Kind2Api extends KindApi {
 		args.add("on");
         args.add("--modular");
         args.add("on");
+        args.add("--inline_arrays");
+        args.add("false");
 		if (timeout != null) {
 			args.add("--timeout_wall");
 			args.add(timeout.toString());
