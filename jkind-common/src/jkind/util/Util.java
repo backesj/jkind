@@ -87,7 +87,7 @@ public class Util {
 	}
 
 	public static Value parseValue(String type, String value) {
-	    
+
 		switch (type) {
 		case "bool":
 			if (value.equals("0") || value.equals("false")) {
@@ -121,31 +121,31 @@ public class Util {
 	}
 
 	public static Value parseArrayValue(String type, Element arrayElement) {
-        int size = Integer.parseInt(arrayElement.getAttribute("size"));
-        List<Value> elements =  new ArrayList<>();
-        for(int i = 0; i < size; i++){
-            Value elValue;
-            Element arrayEl = getElement(arrayElement, "Array", i);
-            if(arrayEl != null){
-                elValue = parseArrayValue(type, arrayEl);
-            }else{
-                arrayEl = getElement(arrayElement, "Item", i);
-                int index = Integer.parseInt(arrayEl.getAttribute("index"));
-                if(index != i){
-                    throw new IllegalArgumentException("We expect array indicies to be sorted");
-                }
-                elValue = parseValue(type, arrayEl.getTextContent());
-            }
-            elements.add(elValue);
-        }
-        return new ArrayValue(elements);
-    }
+		int size = Integer.parseInt(arrayElement.getAttribute("size"));
+		List<Value> elements = new ArrayList<>();
+		for (int i = 0; i < size; i++) {
+			Value elValue;
+			Element arrayEl = getElement(arrayElement, "Array", i);
+			if (arrayEl != null) {
+				elValue = parseArrayValue(type, arrayEl);
+			} else {
+				arrayEl = getElement(arrayElement, "Item", i);
+				int index = Integer.parseInt(arrayEl.getAttribute("index"));
+				if (index != i) {
+					throw new IllegalArgumentException("We expect array indicies to be sorted");
+				}
+				elValue = parseValue(type, arrayEl.getTextContent());
+			}
+			elements.add(elValue);
+		}
+		return new ArrayValue(elements);
+	}
 
 	private static Element getElement(Element element, String name, int index) {
-        return (Element) element.getElementsByTagName(name).item(index);
-    }
-	
-    public static Value parseValue(Type type, String value) {
+		return (Element) element.getElementsByTagName(name).item(index);
+	}
+
+	public static Value parseValue(Type type, String value) {
 		return parseValue(getName(type), value);
 	}
 

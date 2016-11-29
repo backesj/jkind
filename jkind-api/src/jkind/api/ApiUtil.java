@@ -23,8 +23,8 @@ public class ApiUtil {
 	public static File writeLustreFile(String program) {
 		return writeTempFile("jkind-api-", ".lus", program);
 	}
-	
-	public static File writeTempFile(String fileName, String fileExt, String contents){
+
+	public static File writeTempFile(String fileName, String fileExt, String contents) {
 		File file = null;
 		try {
 			file = File.createTempFile(fileName, fileExt);

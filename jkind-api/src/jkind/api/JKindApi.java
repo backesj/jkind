@@ -132,14 +132,14 @@ public class JKindApi extends KindApi {
 	public void setReadAdviceFile(String fileName) {
 		readAdviceFileName = fileName;
 	}
-	
+
 	/*
 	 * Set the advice file to be written
 	 */
 	public void setWriteAdviceFile(String fileName) {
 		writeAdviceFileName = fileName;
 	}
-	
+
 	/**
 	 * Run JKind on a Lustre program
 	 * 
@@ -198,15 +198,14 @@ public class JKindApi extends KindApi {
 			args.add("-solver");
 			args.add(solver.toString());
 		}
-		String tempDirVar = "java.io.tmpdir";
-		String tempDir = System.getProperty(tempDirVar);
-		if(readAdviceFileName != null){
+		String tempDir = System.getProperty("java.io.tmpdir");
+		if (readAdviceFileName != null) {
 			args.add("-read_advice");
-			args.add(tempDir + readAdviceFileName);
+			args.add(new File(tempDir, readAdviceFileName).getAbsolutePath());
 		}
-		if(writeAdviceFileName != null){
+		if (writeAdviceFileName != null) {
 			args.add("-write_advice");
-			args.add(tempDir + writeAdviceFileName);
+			args.add(new File(tempDir, writeAdviceFileName).getAbsolutePath());
 		}
 
 		args.add(lustreFile.toString());

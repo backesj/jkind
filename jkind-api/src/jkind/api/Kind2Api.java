@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 public class Kind2Api extends KindApi {
 	public static final String KIND2 = "kind2-arrays";
 	private static final long POLL_INTERVAL = 100;
-	
+
 	/**
 	 * Run Kind on a Lustre program
 	 * 
@@ -37,10 +37,9 @@ public class Kind2Api extends KindApi {
 		program = WorkaroundKind2ForwardReference.program(program);
 		Kind2ArraysPrettyPrintVisitor kind2Printer = new Kind2ArraysPrettyPrintVisitor();
 		program.accept(kind2Printer);
-		//System.out.println(kind2Printer.toString());
 		execute(kind2Printer.toString(), result, monitor);
 	}
-	
+
 	/**
 	 * Run Kind2 on a Lustre program
 	 * 
