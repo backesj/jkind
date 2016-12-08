@@ -210,7 +210,6 @@ public class JKindApi extends KindApi {
 
 		args.add(lustreFile.toString());
 
-		System.out.println(args);
 		ProcessBuilder builder = new ProcessBuilder(args);
 		ApiUtil.addEnvironment(builder, environment);
 		builder.redirectErrorStream(true);
