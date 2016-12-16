@@ -50,10 +50,12 @@ recursive:
 ```
 
 The main differences between a recursive node and a Lustre node are as follows:
+
 1.	A recursive node may include a recursive call to itself in its body. It may also contain a transitively recursive call to itself by calling another recursive node.
 2.	A recursive node cannot contain any local variables.
 3.	A recursive node can only contain a single output.
 4.	No temporal operations (pre or ->) are allowed in a recursive node.
+
 Traditional Lustre nodes can only contain a finite number of state variables. They can reference other Lustre nodes, but they cannot contain transitive calls to themselves. These restrictions make it easy to inline a Lustre node using relatively simple program transformations. In JKind all nodes called inside of the main program node are inlined before the program is translated into a transition relation described in SMT-LIB. JKind does not inline recursive nodes. Instead the tool directly translates a recursive node definition into a define-fun-rec expression in the SMT-LIB queries sent to CVC4. This is why we require restrictions 2-4 described above.
 
 In addition to recursive nodes, we have also added support to define datatypes inductively. This is described by the following excerpt from JKind's grammar:
@@ -398,6 +400,7 @@ tel;
 ```
 
 The controller guarantees that the location given by the controller either remains in the same location or moves towards the next coordinate in the given plan. The plan is modeled as a list of x,y coordinates of arbitrary length, and the fence is modeled as a rectangle.  The program models the following properties:
+
 1.	If the previous location was within the fence, then the next location is in the fence unless the system recently received a new fence
 2.	The plan being executed by the controller is always within the most recent fence received by the mission computer, except in the instant that a new fence is received.
 3.	The mission computer's last received destination is the last coordinate in the plan being executed by the controller, except in the instant that a new destination is received.
