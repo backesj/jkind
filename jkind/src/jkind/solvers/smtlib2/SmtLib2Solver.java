@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jkind.JKindException;
+import jkind.lustre.Function;
 import jkind.lustre.NamedType;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
@@ -48,17 +49,13 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 			toSolver.newLine();
 			toSolver.flush();
 		} catch (IOException e) {
-			throw new JKindException("Unable to write to " + getSolverName() + ", "
-					+ "probably due to internal JKind error", e);
+			throw new JKindException(
+					"Unable to write to " + getSolverName() + ", " + "probably due to internal JKind error", e);
 		}
 	}
 
 	public Symbol type(Type type) {
-		return new Symbol(capitalize(Util.getName(type)));
-	}
-
-	private String capitalize(String name) {
-		return name.substring(0, 1).toUpperCase() + name.substring(1);
+		return new Symbol(Util.capitalize(Util.getName(type)));
 	}
 
 	@Override
@@ -69,8 +66,8 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 
 	@Override
 	public void define(Relation relation) {
-		send(new Cons("define-fun", new Symbol(relation.getName()), inputs(relation.getInputs()),
-				type(NamedType.BOOL), relation.getBody()));
+		send(new Cons("define-fun", new Symbol(relation.getName()), inputs(relation.getInputs()), type(NamedType.BOOL),
+				relation.getBody()));
 	}
 
 	private Sexp inputs(List<VarDecl> inputs) {
@@ -120,7 +117,7 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		} else {
 			result = new UnknownResult();
 		}
-		
+
 		pop();
 		return result;
 	}
@@ -134,7 +131,7 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 	protected boolean isUnsat(String output) {
 		return output.trim().equals("unsat");
 	}
-	
+
 	protected String readFromSolver() {
 		send("(echo \"" + DONE + "\")");
 
@@ -162,8 +159,7 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 							break;
 						}
 					}
-					throw new JKindException(getSolverName()
-							+ " error (see scratch file for details)");
+					throw new JKindException(getSolverName() + " error (see scratch file for details)");
 				} else {
 					content.append(line);
 					content.append("\n");
@@ -211,5 +207,15 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 	@Override
 	public String getSolverExtension() {
 		return "smt2";
+	}
+
+	@Override
+	protected void declareImplemented(Function function) {
+		
+		List<Sexp> args = new ArrayList<>();
+		for (VarDecl var : function.inputs) {
+			args.add(type(var.type));
+		}
+		send(new Cons("declare-fun", new Symbol(function.id), new Cons(args), type(function.outputs.get(0).type)));
 	}
 }

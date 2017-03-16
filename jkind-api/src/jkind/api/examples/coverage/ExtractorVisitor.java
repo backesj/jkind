@@ -17,6 +17,7 @@ import jkind.lustre.CastExpr;
 import jkind.lustre.CondactExpr;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -36,6 +37,10 @@ import jkind.lustre.visitors.TypeAwareAstMapVisitor;
 import jkind.lustre.visitors.TypeReconstructor;
 
 public class ExtractorVisitor extends TypeAwareAstMapVisitor {
+	public ExtractorVisitor(List<Function> funcs) {
+		super(funcs);
+	}
+
 	public final static String PREFIX = "__extracted__";
 	private final Map<String, ELocation> locationMap = new HashMap<>();
 	private Set<String> constants;
@@ -54,7 +59,7 @@ public class ExtractorVisitor extends TypeAwareAstMapVisitor {
 		boolean enumsAsInts = false;
 		typeReconstructor = new TypeReconstructor(e, enumsAsInts);
 		constants = e.constants.stream().map(c -> c.id).collect(toSet());
-		return new Program(e.location, e.types, e.constants, visitNodes(e.nodes), e.main);
+		return new Program(e.location, e.types, e.constants, visitNodes(e.nodes), visitFunctions(e.functions), e.main);
 	}
 
 	@Override

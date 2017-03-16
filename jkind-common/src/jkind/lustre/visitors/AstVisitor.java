@@ -3,6 +3,7 @@ package jkind.lustre.visitors;
 import jkind.lustre.Constant;
 import jkind.lustre.Contract;
 import jkind.lustre.Equation;
+import jkind.lustre.Function;
 import jkind.lustre.Node;
 import jkind.lustre.Program;
 import jkind.lustre.TypeDef;
@@ -16,4 +17,5 @@ public interface AstVisitor<T, S extends T> extends ExprVisitor<S> {
 	public T visit(TypeDef typeDef);
 	public T visit(VarDecl varDecl);
 	public T visit(Contract contract);
+	public T visit(Function function);
 }

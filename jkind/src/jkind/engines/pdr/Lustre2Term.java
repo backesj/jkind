@@ -13,6 +13,7 @@ import jkind.lustre.CondactExpr;
 import jkind.lustre.EnumType;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -266,5 +267,15 @@ public class Lustre2Term extends ScriptUser implements ExprVisitor<Term> {
 
 	private Term lessEqual(Term left, Term right) {
 		return term("<=", left, right);
+	}
+
+	@Override
+	public Term visit(FunctionCallExpr e) {
+		String id = e.function;
+		Term[] params = new Term[e.args.size()];
+		for(int i = 0; i < e.args.size(); i++){
+			params[i] = e.args.get(i).accept(this);
+		}
+		return term(id, params);
 	}
 }

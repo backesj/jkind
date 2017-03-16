@@ -7,6 +7,7 @@ import jkind.lustre.values.IntegerValue;
 import jkind.lustre.values.Value;
 import jkind.results.Counterexample;
 import jkind.results.Signal;
+import jkind.solvers.FunctionModel;
 import jkind.solvers.Model;
 import jkind.translation.Specification;
 
@@ -14,7 +15,7 @@ public class CounterexampleExtractor {
 	public static Counterexample extract(Specification spec, int k, Model model) {
 		return new CounterexampleExtractor(spec).extractCounterexample(k, model);
 	}
-	
+
 	private final Specification spec;
 
 	private CounterexampleExtractor(Specification spec) {
@@ -31,13 +32,18 @@ public class CounterexampleExtractor {
 				signal.putValue(si.getIndex(), value);
 			}
 		}
+		if (model instanceof FunctionModel) {
+			if (((FunctionModel) model).getFuncImplementations().size() > 0) {
+				cex.setFunctionText(((FunctionModel) model).getFuncImplementations().get(0));
+			}
+		}
 		return cex;
 	}
-	
+
 	private boolean isInternal(String stream) {
 		return stream.startsWith("%");
 	}
-	
+
 	private Value convert(String base, Value value) {
 		Type type = spec.typeMap.get(base);
 		if (type instanceof EnumType && value != null) {

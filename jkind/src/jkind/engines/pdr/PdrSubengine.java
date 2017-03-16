@@ -49,7 +49,7 @@ public class PdrSubengine extends Thread {
 		this.parent = parent;
 		this.director = director;
 
-		this.Z = new PdrSmt(node, F, prop, scratchBase);
+		this.Z = new PdrSmt(node, spec.functions, F, prop, scratchBase);
 	}
 
 	public void cancel() {

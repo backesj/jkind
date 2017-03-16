@@ -25,6 +25,7 @@ import jkind.JKindException;
 import jkind.interval.Interval;
 import jkind.lustre.EnumType;
 import jkind.lustre.Equation;
+import jkind.lustre.Function;
 import jkind.lustre.IdExpr;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
@@ -338,4 +339,17 @@ public class Util {
 	 * ASCII "End of Text" character, used by JKindApi to ask JKind to terminate
 	 */
 	public static final int END_OF_TEXT = 0x03;
+
+
+	public static Map<String, Function> getFunctionTable(List<Function> functions) {
+		Map<String, Function> functionTable = new HashMap<>();
+		for (Function func : functions) {
+			functionTable.put(func.id, func);
+		}
+		return functionTable;
+	}
+	
+	public static String capitalize(String name) {
+		return name.substring(0, 1).toUpperCase() + name.substring(1);
+	}
 }

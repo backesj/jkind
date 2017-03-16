@@ -8,6 +8,7 @@ import jkind.lustre.ArrayExpr;
 import jkind.lustre.ArrayType;
 import jkind.lustre.ArrayUpdateExpr;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.IntExpr;
 import jkind.lustre.Node;
 import jkind.lustre.visitors.TypeAwareAstMapVisitor;
@@ -19,8 +20,13 @@ import jkind.lustre.visitors.TypeAwareAstMapVisitor;
  * Assumption: All node calls have been inlined.
  */
 public class RemoveArrayUpdates extends TypeAwareAstMapVisitor {
-	public static Node node(Node node) {
-		return new RemoveArrayUpdates().visit(node);
+	
+	public RemoveArrayUpdates(List<Function> funcs) {
+		super(funcs);
+	}
+
+	public static Node node(Node node, List<Function> funcs) {
+		return new RemoveArrayUpdates(funcs).visit(node);
 	}
 	
 	@Override

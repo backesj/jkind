@@ -1,9 +1,11 @@
 package jkind.translation.compound;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.Node;
 import jkind.lustre.RecordAccessExpr;
 import jkind.lustre.RecordExpr;
@@ -28,8 +30,13 @@ import jkind.lustre.visitors.TypeAwareAstMapVisitor;
  * Guarantees: All record update expressions are removed
  */
 public class RemoveRecordUpdates extends TypeAwareAstMapVisitor {
-	public static Node node(Node node) {
-		return new RemoveRecordUpdates().visit(node);
+	public RemoveRecordUpdates(List<Function> funcs) {
+		super(funcs);
+		// TODO Auto-generated constructor stub
+	}
+
+	public static Node node(Node node, List<Function> funcs) {
+		return new RemoveRecordUpdates(funcs).visit(node);
 	}
 	
 	@Override

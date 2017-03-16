@@ -16,6 +16,7 @@ import jkind.lustre.BoolExpr;
 import jkind.lustre.CastExpr;
 import jkind.lustre.CondactExpr;
 import jkind.lustre.Expr;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -94,6 +95,11 @@ public class ExprMapVisitor implements ExprVisitor<Expr> {
 	@Override
 	public Expr visit(NodeCallExpr e) {
 		return new NodeCallExpr(e.location, e.node, visitExprs(e.args));
+	}
+	
+	@Override
+	public Expr visit(FunctionCallExpr e) {
+		return new FunctionCallExpr(e.location, e.function, visitExprs(e.args));
 	}
 
 	@Override

@@ -1,16 +1,19 @@
 package jkind.solvers.smtinterpol;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
 import jkind.JKindException;
+import jkind.lustre.Function;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
 import jkind.lustre.values.Value;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
+import jkind.solvers.FunctionModel;
 import jkind.solvers.Model;
 import jkind.solvers.Result;
 import jkind.solvers.SatResult;
@@ -19,7 +22,11 @@ import jkind.solvers.Solver;
 import jkind.solvers.UnknownResult;
 import jkind.solvers.UnsatResult;
 import jkind.translation.Relation;
+import jkind.util.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbolFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -124,7 +131,7 @@ public class SmtInterpolSolver extends Solver {
 	}
 
 	private Model extractModel(de.uni_freiburg.informatik.ultimate.logic.Model model) {
-		SimpleModel result = new SimpleModel();
+		FunctionModel result = new FunctionModel();
 		for (Entry<String, Type> entry : varTypes.entrySet()) {
 			String name = entry.getKey();
 			Type type = entry.getValue();
@@ -132,6 +139,10 @@ public class SmtInterpolSolver extends Solver {
 			Value value = SmtInterpolUtil.getValue(evaluated, type);
 			result.putValue(name, value);
 		}
+		if (functions.size() > 0) {
+			result.addImplementation(model.toString());
+		}
+
 		return result;
 	}
 
@@ -165,4 +176,10 @@ public class SmtInterpolSolver extends Solver {
 	private Term convert(Sexp sexp) {
 		return SmtInterpolUtil.convert(script, sexp);
 	}
+
+	@Override
+	protected void declareImplemented(Function function) {
+		SmtInterpolUtil.decalreFunction(function, script);
+	}
+
 }

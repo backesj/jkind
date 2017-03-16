@@ -14,6 +14,7 @@ import jkind.lustre.UnaryOp;
 import jkind.lustre.values.Value;
 import jkind.slicing.Dependency;
 import jkind.slicing.DependencySet;
+import jkind.solvers.FunctionModel;
 import jkind.solvers.Model;
 import jkind.solvers.SimpleModel;
 import jkind.translation.Specification;
@@ -36,7 +37,7 @@ public class ModelReconstructionEvaluator extends Evaluator {
 
 	private ModelReconstructionEvaluator(Specification spec, Model model, boolean concrete) {
 		this.spec = spec;
-		this.model = new SimpleModel(model);
+		this.model = new FunctionModel(model);
 		this.concrete = concrete;
 
 		for (Equation eq : spec.node.equations) {

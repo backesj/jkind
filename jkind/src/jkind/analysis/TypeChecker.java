@@ -22,6 +22,8 @@ import jkind.lustre.Constant;
 import jkind.lustre.EnumType;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -52,10 +54,12 @@ public class TypeChecker implements ExprVisitor<Type> {
 	private final Map<String, EnumType> enumValueTable = new HashMap<>();
 	private final Map<String, Type> variableTable = new HashMap<>();
 	private final Map<String, Node> nodeTable;
+	private final Map<String, Function> functionTable;
 	private boolean passed;
 
 	private TypeChecker(Program program) {
 		this.nodeTable = Util.getNodeTable(program.nodes);
+		this.functionTable = Util.getFunctionTable(program.functions);
 		this.passed = true;
 
 		populateTypeTable(program.types);
@@ -422,12 +426,29 @@ public class TypeChecker implements ExprVisitor<Type> {
 	public Type visit(NodeCallExpr e) {
 		return compressTypes(visitNodeCallExpr(e));
 	}
+	
+	@Override
+	public Type visit(FunctionCallExpr e) {
+		return compressTypes(visitFunctionCallExpr(e));
+	}
 
 	private List<Type> visitNodeCallExpr(NodeCallExpr e) {
 		Node node = nodeTable.get(e.node);
-		if (node == null) {
-			error(e, "unknown node " + e.node);
+		Function func = functionTable.get(e.node);
+		if (node == null && func == null) {
+			error(e, "unknown node or function" + e.node);
 			return null;
+		}
+		
+		
+		List<VarDecl> inputs;
+		List<VarDecl> outputs;
+		if(func != null){
+			inputs = func.inputs;
+			outputs = func.outputs;
+		}else{
+			inputs = node.inputs;
+			outputs = node.outputs;
 		}
 
 		List<Type> actual = new ArrayList<>();
@@ -436,7 +457,7 @@ public class TypeChecker implements ExprVisitor<Type> {
 		}
 
 		List<Type> expected = new ArrayList<>();
-		for (VarDecl input : node.inputs) {
+		for (VarDecl input : inputs) {
 			expected.add(resolveType(input.type));
 		}
 
@@ -450,10 +471,14 @@ public class TypeChecker implements ExprVisitor<Type> {
 		}
 
 		List<Type> result = new ArrayList<>();
-		for (VarDecl decl : node.outputs) {
+		for (VarDecl decl : outputs) {
 			result.add(resolveType(decl.type));
 		}
 		return result;
+	}
+	
+	private List<Type> visitFunctionCallExpr(FunctionCallExpr e) {
+		throw new IllegalArgumentException("The AST should not have FunctionCallExprs at this point");
 	}
 
 	@Override

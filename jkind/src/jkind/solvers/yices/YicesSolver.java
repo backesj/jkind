@@ -13,6 +13,7 @@ import jkind.lustre.BinaryExpr;
 import jkind.lustre.BinaryOp;
 import jkind.lustre.CastExpr;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.NamedType;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
@@ -310,5 +311,11 @@ public class YicesSolver extends ProcessBasedSolver implements MaxSatSolver {
 				return false;
 			}
 		});
+	}
+
+	@Override
+	protected void declareImplemented(Function function) {
+		// TODO Auto-generated method stub
+		throw new IllegalArgumentException("We do not support uninterpretted functions with yices");
 	}
 }

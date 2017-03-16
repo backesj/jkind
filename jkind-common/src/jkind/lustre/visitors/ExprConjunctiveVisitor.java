@@ -10,6 +10,7 @@ import jkind.lustre.BoolExpr;
 import jkind.lustre.CastExpr;
 import jkind.lustre.CondactExpr;
 import jkind.lustre.Expr;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -74,6 +75,11 @@ public class ExprConjunctiveVisitor implements ExprVisitor<Boolean> {
 
 	@Override
 	public Boolean visit(NodeCallExpr e) {
+		return visitExprs(e.args);
+	}
+	
+	@Override
+	public Boolean visit(FunctionCallExpr e) {
 		return visitExprs(e.args);
 	}
 

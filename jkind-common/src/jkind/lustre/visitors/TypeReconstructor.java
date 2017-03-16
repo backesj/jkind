@@ -16,6 +16,8 @@ import jkind.lustre.CondactExpr;
 import jkind.lustre.Constant;
 import jkind.lustre.EnumType;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -49,6 +51,7 @@ public class TypeReconstructor implements ExprVisitor<Type> {
 	private final Map<String, EnumType> enumValueTable = new HashMap<>();
 	private final Map<String, Type> variableTable = new HashMap<>();
 	private final Map<String, Node> nodeTable = new HashMap<>();
+	private final Map<String, Function> funcTable;
 	private final boolean enumsAsInts;
 
 	public TypeReconstructor(Program program) {
@@ -57,6 +60,7 @@ public class TypeReconstructor implements ExprVisitor<Type> {
 		populateEnumValueTable(program.types);
 		populateConstantTable(program.constants);
 		nodeTable.putAll(Util.getNodeTable(program.nodes));
+		funcTable = Util.getFunctionTable(program.functions);
 	}
 	
 	public TypeReconstructor(Program program, boolean enumsAsInts) {
@@ -65,14 +69,16 @@ public class TypeReconstructor implements ExprVisitor<Type> {
 		populateEnumValueTable(program.types);
 		populateConstantTable(program.constants);
 		nodeTable.putAll(Util.getNodeTable(program.nodes));
+		funcTable = Util.getFunctionTable(program.functions);
 	}
 	
 	/**
 	 * This constructor is for use after enumerated values, user types,
 	 * constants, and nodes have all been inlined.
 	 */
-	public TypeReconstructor() {
+	public TypeReconstructor(List<Function> funcs) {
 		this.enumsAsInts = true;
+		funcTable = Util.getFunctionTable(funcs);
 	}
 
 	private void populateTypeTable(List<TypeDef> typeDefs) {
@@ -206,6 +212,16 @@ public class TypeReconstructor implements ExprVisitor<Type> {
 		Node node = nodeTable.get(e.node);
 		List<Type> outputs = new ArrayList<>();
 		for (VarDecl output : node.outputs) {
+			outputs.add(resolveType(output.type));
+		}
+		return TupleType.compress(outputs);
+	}
+	
+	@Override
+	public Type visit(FunctionCallExpr e) {
+		Function func = funcTable.get(e.function);
+		List<Type> outputs = new ArrayList<>();
+		for (VarDecl output : func.outputs) {
 			outputs.add(resolveType(output.type));
 		}
 		return TupleType.compress(outputs);

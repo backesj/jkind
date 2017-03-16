@@ -7,6 +7,7 @@ import jkind.lustre.Constant;
 import jkind.lustre.Contract;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.Node;
 import jkind.lustre.Program;
 import jkind.lustre.TypeDef;
@@ -83,7 +84,8 @@ public class AstMapVisitor extends ExprMapVisitor implements AstVisitor<Ast, Exp
 		List<TypeDef> types = visitTypeDefs(e.types);
 		List<Constant> constants = visitConstants(e.constants);
 		List<Node> nodes = visitNodes(e.nodes);
-		return new Program(e.location, types, constants, nodes, e.main);
+		List<Function> functions = visitFunctions(e.functions);
+		return new Program(e.location, types, constants, nodes, functions, e.main);
 	}
 
 	protected List<TypeDef> visitTypeDefs(List<TypeDef> es) {
@@ -95,6 +97,10 @@ public class AstMapVisitor extends ExprMapVisitor implements AstVisitor<Ast, Exp
 	}
 
 	protected List<Node> visitNodes(List<Node> es) {
+		return map(this::visit, es);
+	}
+	
+	protected List<Function> visitFunctions(List<Function> es) {
 		return map(this::visit, es);
 	}
 
@@ -114,5 +120,12 @@ public class AstMapVisitor extends ExprMapVisitor implements AstVisitor<Ast, Exp
 			return null;
 		}
 		return new Contract(visitExprs(contract.requires), visitExprs(contract.ensures));
+	}
+
+	@Override
+	public Function visit(Function e) {
+		List<VarDecl> inputs = visitVarDecls(e.inputs);
+		List<VarDecl> outputs = visitVarDecls(e.outputs);
+		return new Function(e.location, e.id, inputs, outputs);
 	}
 }

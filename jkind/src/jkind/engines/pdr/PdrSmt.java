@@ -11,6 +11,7 @@ import java.util.Set;
 
 import jkind.engines.StopException;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.Node;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
@@ -48,7 +49,7 @@ public class PdrSmt extends ScriptUser {
 
 	private final NameGenerator abstractAssertions = new NameGenerator("abstract");
 
-	public PdrSmt(Node node, List<Frame> F, String property, String scratchBase) {
+	public PdrSmt(Node node, List<Function> functions, List<Frame> F, String property, String scratchBase) {
 		super(SmtInterpolUtil.getScript(scratchBase));
 		this.F = F;
 
@@ -57,6 +58,8 @@ public class PdrSmt extends ScriptUser {
 		script.setOption(":simplify-interpolants", true);
 		script.setLogic(Logics.QF_UFLIRA);
 		script.setOption(":verbosity", 2);
+		
+		declareFunctions(functions);
 
 		Lustre2Term lustre2Term = new Lustre2Term(script, node);
 		this.varDecls = lustre2Term.getVariables();
@@ -74,6 +77,12 @@ public class PdrSmt extends ScriptUser {
 
 		addPredicates(PredicateCollector.collect(I));
 		addPredicates(PredicateCollector.collect(P));
+	}
+
+	private void declareFunctions(List<Function> functions) {
+		for(Function function : functions){
+			SmtInterpolUtil.decalreFunction(function, script);
+		}
 	}
 
 	private void assertAbstract(Term t) {

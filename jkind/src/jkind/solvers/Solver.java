@@ -2,11 +2,15 @@ package jkind.solvers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import jkind.JKindException;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.NamedType;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
@@ -21,6 +25,15 @@ public abstract class Solver {
 	public abstract void assertSexp(Sexp sexp);
 	public abstract void define(VarDecl decl);
 	public abstract void define(Relation relation);
+	protected abstract void declareImplemented(Function function);
+	
+	public final void declare(Function function) {
+		if(functions.contains(function)){
+			throw new JKindException("duplicate declarations of function: '"+function.id+"'");
+		}
+		functions.add(function);
+		declareImplemented(function);
+	}
 
 	/**
 	 * A query focused on the SAT result. Produces a model for SAT. Does not
@@ -35,6 +48,7 @@ public abstract class Solver {
 	public abstract void stop();
 
 	protected final Map<String, Type> varTypes = new HashMap<>();
+	protected final Set<Function> functions = new HashSet<>();
 
 	/**
 	 * Check if the solver supports all of the operators in the expression.
@@ -45,6 +59,17 @@ public abstract class Solver {
 	 */
 	public boolean supports(Expr expr) {
 		return true;
+	}
+	
+	/**
+	 * Declares a list of functions
+	 * @param functions
+	 */
+	
+	public void declare(List<Function> functions){
+		for(Function func : functions){
+			declare(func);
+		}
 	}
 
 	public Symbol createActivationLiteral(String prefix, int i) {

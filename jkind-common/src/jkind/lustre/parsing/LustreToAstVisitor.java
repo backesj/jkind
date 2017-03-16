@@ -21,6 +21,7 @@ import jkind.lustre.Contract;
 import jkind.lustre.EnumType;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -58,6 +59,7 @@ import jkind.lustre.parsing.LustreParser.EIDContext;
 import jkind.lustre.parsing.LustreParser.EnumTypeContext;
 import jkind.lustre.parsing.LustreParser.EquationContext;
 import jkind.lustre.parsing.LustreParser.ExprContext;
+import jkind.lustre.parsing.LustreParser.FunctionContext;
 import jkind.lustre.parsing.LustreParser.IdExprContext;
 import jkind.lustre.parsing.LustreParser.IfThenElseExprContext;
 import jkind.lustre.parsing.LustreParser.IntExprContext;
@@ -100,7 +102,8 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		List<TypeDef> types = types(ctx.typedef());
 		List<Constant> constants = constants(ctx.constant());
 		List<Node> nodes = nodes(ctx.node());
-		return new Program(loc(ctx), types, constants, nodes, main);
+		List<Function> functions = functions(ctx.function());
+		return new Program(loc(ctx), types, constants, nodes, functions, main);
 	}
 
 	private List<TypeDef> types(List<TypedefContext> ctxs) {
@@ -131,6 +134,14 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		}
 		return nodes;
 	}
+	
+	private List<Function> functions(List<FunctionContext> ctxs) {
+		List<Function> functions = new ArrayList<>();
+		for (FunctionContext ctx : ctxs) {
+			functions.add(function(ctx));
+		}
+		return functions;
+	}
 
 	public Node node(NodeContext ctx) {
 		String id = ctx.ID().getText();
@@ -152,6 +163,14 @@ public class LustreToAstVisitor extends LustreBaseVisitor<Object> {
 		}
 		return new Node(loc(ctx), id, inputs, outputs, locals, equations, properties, assertions,
 				realizabilityInputs, contract, ivc);
+	}
+	
+	public Function function(FunctionContext ctx) {
+		String id = ctx.ID().getText();
+		List<VarDecl> inputs = varDecls(ctx.input);
+		List<VarDecl> outputs = varDecls(ctx.output);
+		
+		return new Function(loc(ctx), id, inputs, outputs);
 	}
 
 	private List<VarDecl> varDecls(VarDeclListContext listCtx) {

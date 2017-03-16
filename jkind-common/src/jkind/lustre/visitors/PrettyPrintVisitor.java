@@ -18,6 +18,8 @@ import jkind.lustre.Contract;
 import jkind.lustre.EnumType;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -71,6 +73,14 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 		if (!program.constants.isEmpty()) {
 			for (Constant constant : program.constants) {
 				constant.accept(this);
+				newline();
+			}
+			newline();
+		}
+
+		if (!program.functions.isEmpty()) {
+			for (Function function : program.functions) {
+				function.accept(this);
 				newline();
 			}
 			newline();
@@ -209,6 +219,23 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 		}
 
 		write("tel;");
+		return null;
+	}
+
+	@Override
+	public Void visit(Function function) {
+		write("function ");
+		write(function.id);
+		write("(");
+		newline();
+		varDecls(function.inputs);
+		newline();
+		write(") returns (");
+		newline();
+		varDecls(function.outputs);
+		newline();
+		write(");");
+		newline();
 		return null;
 	}
 
@@ -392,6 +419,21 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 		write(")");
 		return null;
 	}
+	
+	@Override
+	public Void visit(FunctionCallExpr e) {
+		write(e.function);
+		write("(");
+		Iterator<Expr> iterator = e.args.iterator();
+		while (iterator.hasNext()) {
+			expr(iterator.next());
+			if (iterator.hasNext()) {
+				write(", ");
+			}
+		}
+		write(")");
+		return null;
+	}
 
 	@Override
 	public Void visit(RealExpr e) {
@@ -491,4 +533,5 @@ public class PrettyPrintVisitor implements AstVisitor<Void, Void> {
 		newline();
 		return null;
 	}
+
 }

@@ -6,6 +6,7 @@ import jkind.lustre.ArrayType;
 import jkind.lustre.BinaryExpr;
 import jkind.lustre.BinaryOp;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.LustreUtil;
 import jkind.lustre.Node;
 import jkind.lustre.RecordType;
@@ -18,8 +19,13 @@ import jkind.lustre.visitors.TypeAwareAstMapVisitor;
  * Expand equalities and inequalities on records and arrays
  */
 public class FlattenCompoundComparisons extends TypeAwareAstMapVisitor {
-	public static Node node(Node node) {
-		return new FlattenCompoundComparisons().visit(node);
+	
+	public FlattenCompoundComparisons(List<Function> funcs) {
+		super(funcs);
+	}
+
+	public static Node node(Node node, List<Function> funcs) {
+		return new FlattenCompoundComparisons(funcs).visit(node);
 	}
 
 	@Override

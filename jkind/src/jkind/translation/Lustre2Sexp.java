@@ -14,6 +14,7 @@ import jkind.lustre.CastExpr;
 import jkind.lustre.CondactExpr;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -138,6 +139,15 @@ public class Lustre2Sexp implements ExprVisitor<Sexp> {
 		throw new IllegalArgumentException("Arrays must be flattened before translation to sexp");
 	}
 
+	@Override
+	public Sexp visit(FunctionCallExpr e){
+		List<Sexp> argList = new ArrayList<>();
+		for(Expr expr : e.args){
+			argList.add(expr.accept(this));
+		}
+		return new Cons(e.function, argList);
+	}
+	
 	@Override
 	public Sexp visit(BinaryExpr e) {
 		Sexp left = e.left.accept(this);

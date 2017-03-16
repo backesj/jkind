@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 import jkind.lustre.Constant;
+import jkind.lustre.Function;
 import jkind.lustre.Node;
 import jkind.lustre.Program;
 import jkind.lustre.TypeDef;
@@ -13,6 +14,7 @@ public class ProgramBuilder {
 	private List<TypeDef> types = new ArrayList<>();
 	private List<Constant> constants = new ArrayList<>();
 	private List<Node> nodes = new ArrayList<>();
+	private List<Function> functions = new ArrayList<>();
 	private String main;
 
 	public ProgramBuilder() {
@@ -22,6 +24,7 @@ public class ProgramBuilder {
 		this.types = new ArrayList<>(program.types);
 		this.constants = new ArrayList<>(program.constants);
 		this.nodes = new ArrayList<>(program.nodes);
+		this.functions = new ArrayList<>(program.functions);
 		this.main = program.main;
 	}
 
@@ -76,6 +79,6 @@ public class ProgramBuilder {
 	}
 
 	public Program build() {
-		return new Program(types, constants, nodes, main);
+		return new Program(types, constants, nodes, functions, main);
 	}
 }

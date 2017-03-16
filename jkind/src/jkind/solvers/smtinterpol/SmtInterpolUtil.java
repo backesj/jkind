@@ -2,12 +2,18 @@ package jkind.solvers.smtinterpol;
 
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.util.List;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import jkind.JKindException;
 import jkind.lustre.EnumType;
+import jkind.lustre.Function;
 import jkind.lustre.NamedType;
 import jkind.lustre.SubrangeIntType;
 import jkind.lustre.Type;
+import jkind.lustre.VarDecl;
 import jkind.lustre.values.BooleanValue;
 import jkind.lustre.values.IntegerValue;
 import jkind.lustre.values.RealValue;
@@ -17,9 +23,6 @@ import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
 import jkind.util.BigFraction;
 import jkind.util.Util;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -36,7 +39,7 @@ public class SmtInterpolUtil {
 		Logger logger = Logger.getRootLogger();
 		logger.setLevel(Level.OFF);
 
-		Script baseScript = new SMTInterpol(logger);
+		Script baseScript = new SMTInterpol();// SMTInterpol(logger);
 		if (scratchBase == null) {
 			return baseScript;
 		}
@@ -155,5 +158,22 @@ public class SmtInterpolUtil {
 		}
 
 		throw new JKindException("Unhandled constant in term to value conversion: " + ct);
+	}
+
+	public static Sort[] varsToSorts(List<VarDecl> vars, Script script) {
+		Sort[] sorts = new Sort[vars.size()];
+		for (int i = 0; i < vars.size(); i++) {
+			sorts[i] = script.sort(getConvertedTypeName(vars.get(i)));
+		}
+		return sorts;
+	}
+
+	public static String getConvertedTypeName(VarDecl var) {
+		return Util.capitalize(Util.getName(var.type));
+	}
+
+	public static void decalreFunction(Function function, Script script) {
+		script.declareFun(function.id, SmtInterpolUtil.varsToSorts(function.inputs, script),
+				SmtInterpolUtil.varsToSorts(function.outputs, script)[0]);
 	}
 }

@@ -1,5 +1,8 @@
 package jkind.translation.compound;
 
+import java.util.List;
+
+import jkind.lustre.Function;
 import jkind.lustre.Node;
 
 /**
@@ -8,11 +11,11 @@ import jkind.lustre.Node;
  * Assumption: All node calls have been inlined.
  */
 public class FlattenCompoundTypes {
-	public static Node node(Node node) {
-		node = RemoveNonConstantArrayIndices.node(node);
-		node = RemoveArrayUpdates.node(node);
-		node = RemoveRecordUpdates.node(node);
-		node = FlattenCompoundComparisons.node(node);
+	public static Node node(Node node, List<Function> funcs) {
+		node = RemoveNonConstantArrayIndices.node(node, funcs);
+		node = RemoveArrayUpdates.node(node, funcs);
+		node = RemoveRecordUpdates.node(node, funcs);
+		node = FlattenCompoundComparisons.node(node, funcs);
 		node = FlattenCompoundVariables.node(node);
 		node = FlattenCompoundExpressions.node(node);
 		return node;

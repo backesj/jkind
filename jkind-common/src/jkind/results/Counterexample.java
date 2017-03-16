@@ -23,6 +23,7 @@ import jkind.util.CounterexampleFormatter;
 public final class Counterexample {
 	private final int length;
 	private final Map<String, Signal<Value>> signals = new HashMap<>();
+	private String functionText ="";
 
 	public Counterexample(int length) {
 		this.length = length;
@@ -39,6 +40,11 @@ public final class Counterexample {
 		signals.put(signal.getName(), signal);
 	}
 
+	//TODO: change this
+	public void setFunctionText(String str){
+		functionText = str;
+	}
+	
 	/**
 	 * All signals in the counterexample
 	 */
@@ -191,6 +197,6 @@ public final class Counterexample {
 	}
 
 	public String toString(Layout layout) {
-		return new CounterexampleFormatter(this, layout).toString();
+		return new CounterexampleFormatter(this, layout).toString() + "\n" + functionText;
 	}
 }
