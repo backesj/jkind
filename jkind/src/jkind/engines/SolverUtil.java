@@ -8,6 +8,7 @@ import jkind.JKindException;
 import jkind.SolverOption;
 import jkind.analysis.LinearChecker;
 import jkind.analysis.YicesArithOnlyCheck;
+import jkind.lustre.Function;
 import jkind.lustre.Node;
 import jkind.lustre.builders.NodeBuilder;
 import jkind.solvers.Solver;
@@ -19,20 +20,20 @@ import jkind.solvers.yices2.Yices2Solver;
 import jkind.solvers.z3.Z3Solver;
 
 public class SolverUtil {
-	public static Solver getSolver(SolverOption solverOption, String scratchBase, Node node) {
+	public static Solver getSolver(SolverOption solverOption, String scratchBase, Node node, List<Function> functions) {
 		switch (solverOption) {
 		case YICES:
 			return new YicesSolver(scratchBase, YicesArithOnlyCheck.check(node));
 		case CVC4:
-			return new Cvc4Solver(scratchBase);
+			return new Cvc4Solver(scratchBase, node, functions);
 		case Z3:
-			return new Z3Solver(scratchBase, LinearChecker.isLinear(node));
+			return new Z3Solver(scratchBase, node, functions, LinearChecker.isLinear(node));
 		case YICES2:
-			return new Yices2Solver(scratchBase);
+			return new Yices2Solver(scratchBase, node, functions);
 		case MATHSAT:
-			return new MathSatSolver(scratchBase);
+			return new MathSatSolver(scratchBase, node, functions);
 		case SMTINTERPOL:
-			return new SmtInterpolSolver(scratchBase);
+			return new SmtInterpolSolver(scratchBase, node);
 		}
 		throw new IllegalArgumentException("Unknown solver: " + solverOption);
 	}
@@ -40,7 +41,7 @@ public class SolverUtil {
 	public static boolean solverIsAvailable(SolverOption solverOption) {
 		try {
 			Node emptyNode = new NodeBuilder("empty").build();
-			getSolver(solverOption, null, emptyNode);
+			getSolver(solverOption, null, emptyNode, null);
 		} catch (JKindException e) {
 			return false;
 		}

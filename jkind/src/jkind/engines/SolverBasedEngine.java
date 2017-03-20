@@ -54,7 +54,7 @@ public abstract class SolverBasedEngine extends Engine {
 	}
 
 	protected Solver getSolver() {
-		return SolverUtil.getSolver(settings.solver, getScratchBase(), spec.node);
+		return SolverUtil.getSolver(settings.solver, getScratchBase(), spec.node, spec.functions);
 	}
 
 	/** Utility */

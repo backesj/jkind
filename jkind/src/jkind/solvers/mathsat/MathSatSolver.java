@@ -8,6 +8,8 @@ import jkind.JKindException;
 import jkind.lustre.BinaryExpr;
 import jkind.lustre.BinaryOp;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
+import jkind.lustre.Node;
 import jkind.lustre.visitors.ExprConjunctiveVisitor;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
@@ -27,8 +29,8 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 public class MathSatSolver extends SmtLib2Solver {
-	public MathSatSolver(String scratchBase) {
-		super(scratchBase);
+	public MathSatSolver(String scratchBase, Node node, List<Function> functions) {
+		super(scratchBase, node, functions);
 	}
 
 	@Override

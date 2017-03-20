@@ -10,6 +10,7 @@ import static jkind.lustre.LustreUtil.real;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 
 import jkind.engines.pdr.Lustre2Term;
@@ -17,6 +18,7 @@ import jkind.lustre.BinaryExpr;
 import jkind.lustre.BinaryOp;
 import jkind.lustre.BoolExpr;
 import jkind.lustre.Expr;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
@@ -40,8 +42,7 @@ public class Term2Expr {
 		} else if (term instanceof ApplicationTerm) {
 			return expr((ApplicationTerm) term);
 		} else {
-			throw new IllegalArgumentException("Unhandled term type: "
-					+ term.getClass().getSimpleName());
+			throw new IllegalArgumentException("Unhandled term type: " + term.getClass().getSimpleName());
 		}
 	}
 
@@ -56,12 +57,30 @@ public class Term2Expr {
 			Rational r = (Rational) ct.getValue();
 			return divide(real(r.numerator()), real(r.denominator()));
 		} else {
-			throw new IllegalArgumentException("Unhandled constant term type: "
-					+ ct.getClass().getSimpleName());
+			throw new IllegalArgumentException("Unhandled constant term type: " + ct.getClass().getSimpleName());
 		}
 	}
 
 	private static Expr expr(ApplicationTerm at) {
+
+		// try to apply a term that is built into the theory
+		// if it does not work it means that we are applying an
+		// uninterpreted function
+		try {
+			return exprTheory(at);
+		} catch (IllegalArgumentException e) {
+			// TODO: we should attempt to verify that these are indeed user
+			// declared functions
+			List<Expr> params = new ArrayList<>();
+			for (Term term : at.getParameters()) {
+				params.add(expr(term));
+			}
+			return new FunctionCallExpr(at.getFunction().getName(), params);
+		}
+
+	}
+
+	private static Expr exprTheory(ApplicationTerm at) {
 		String name = at.getFunction().getName();
 		Term[] params = at.getParameters();
 

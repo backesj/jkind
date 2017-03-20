@@ -2,12 +2,14 @@ package jkind.solvers.cvc4;
 
 import java.util.List;
 
+import jkind.lustre.Function;
+import jkind.lustre.Node;
 import jkind.sexp.Symbol;
 import jkind.solvers.smtlib2.SmtLib2Solver;
 
 public class Cvc4Solver extends SmtLib2Solver {
-	public Cvc4Solver(String scratchBase) {
-		super(scratchBase);
+	public Cvc4Solver(String scratchBase, Node node, List<Function> functions) {
+		super(scratchBase, node, functions);
 	}
 
 	@Override

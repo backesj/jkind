@@ -5,10 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jkind.JKindException;
+import jkind.analysis.evaluation.FunctionEvaluator;
 import jkind.lustre.Function;
+import jkind.lustre.FunctionCallExpr;
+import jkind.lustre.IdExpr;
 import jkind.lustre.NamedType;
+import jkind.lustre.Node;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
+import jkind.lustre.values.Value;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
@@ -29,8 +34,14 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 
 public abstract class SmtLib2Solver extends ProcessBasedSolver {
-	public SmtLib2Solver(String scratchBase) {
+	
+	private final Node node;
+	private final List<Function> functions;
+	
+	public SmtLib2Solver(String scratchBase, Node node, List<Function> functions) {
 		super(scratchBase);
+		this.node = node;
+		this.functions = Util.safeList(functions);
 	}
 
 	@Override
@@ -190,7 +201,7 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		if (parser.getNumberOfSyntaxErrors() > 0) {
 			throw new JKindException("Error parsing " + getSolverName() + " output: " + string);
 		}
-
+				
 		return ModelExtractor.getModel(ctx, varTypes);
 	}
 

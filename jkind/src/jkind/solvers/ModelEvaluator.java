@@ -1,6 +1,7 @@
 package jkind.solvers;
 
 import jkind.analysis.evaluation.Evaluator;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.values.Value;
 import jkind.util.StreamIndex;
@@ -18,5 +19,10 @@ public class ModelEvaluator extends Evaluator {
 	@Override
 	public Value visit(IdExpr e) {
 		return model.getValue(new StreamIndex(e.id, index));
+	}
+
+	@Override
+	public Value visit(FunctionCallExpr e) {
+		throw new IllegalArgumentException("This evaluator should not evaluate functions");
 	}
 }

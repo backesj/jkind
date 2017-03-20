@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import jkind.lustre.Function;
+import jkind.lustre.Node;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
@@ -18,8 +20,8 @@ public class Z3Solver extends SmtLib2Solver implements MaxSatSolver {
 	private final boolean linear;
 	private int actCount = 1;
 
-	public Z3Solver(String scratchBase, boolean linear) {
-		super(scratchBase);
+	public Z3Solver(String scratchBase, Node node, List<Function> functions, boolean linear) {
+		super(scratchBase, node, functions);
 		this.linear = linear;
 	}
 

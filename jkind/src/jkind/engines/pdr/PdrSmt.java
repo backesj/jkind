@@ -7,8 +7,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import jkind.analysis.evaluation.SmtInterpolFunctionEvaluator;
 import jkind.engines.StopException;
 import jkind.lustre.Expr;
 import jkind.lustre.Function;
@@ -22,7 +24,10 @@ import jkind.solvers.smtinterpol.SmtInterpolUtil;
 import jkind.solvers.smtinterpol.Subst;
 import jkind.solvers.smtinterpol.Term2Expr;
 import jkind.translation.Relation;
+import jkind.util.FunctionTable;
+import jkind.util.FunctionTableRow;
 import jkind.util.StreamIndex;
+import jkind.util.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -48,6 +53,8 @@ public class PdrSmt extends ScriptUser {
 	private final Set<Term> predicates = new HashSet<>();
 
 	private final NameGenerator abstractAssertions = new NameGenerator("abstract");
+	private final Node node;
+	private final List<Function> functions;
 
 	public PdrSmt(Node node, List<Function> functions, List<Frame> F, String property, String scratchBase) {
 		super(SmtInterpolUtil.getScript(scratchBase));
@@ -63,7 +70,9 @@ public class PdrSmt extends ScriptUser {
 
 		Lustre2Term lustre2Term = new Lustre2Term(script, node);
 		this.varDecls = lustre2Term.getVariables();
-
+		this.node = node;
+		this.functions = Util.safeList(functions);
+		
 		this.base = getVariables("");
 		this.baseAbstract = getVariables("-");
 		this.primeAbstract = getVariables("-'");
@@ -348,6 +357,11 @@ public class PdrSmt extends ScriptUser {
 				result.putValue(name, value);
 			}
 		}
+		
+		SmtInterpolFunctionEvaluator funcEval = new SmtInterpolFunctionEvaluator(script, model, node, functions, length-1);
+		List<FunctionTable> funcs = funcEval.evaluateFuncs();
+		result.addImplementation(funcs);
+		
 		return result;
 	}
 

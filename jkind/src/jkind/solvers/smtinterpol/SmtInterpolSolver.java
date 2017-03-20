@@ -1,19 +1,19 @@
 package jkind.solvers.smtinterpol;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
 import jkind.JKindException;
+import jkind.analysis.evaluation.SmtInterpolFunctionEvaluator;
 import jkind.lustre.Function;
+import jkind.lustre.Node;
 import jkind.lustre.Type;
 import jkind.lustre.VarDecl;
 import jkind.lustre.values.Value;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
-import jkind.solvers.FunctionModel;
 import jkind.solvers.Model;
 import jkind.solvers.Result;
 import jkind.solvers.SatResult;
@@ -22,11 +22,8 @@ import jkind.solvers.Solver;
 import jkind.solvers.UnknownResult;
 import jkind.solvers.UnsatResult;
 import jkind.translation.Relation;
-import jkind.util.Util;
+import jkind.util.FunctionTable;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.Assignments;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbolFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -36,9 +33,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class SmtInterpolSolver extends Solver {
 	private final Script script;
+	private final Node node;
+	private int length;
 
-	public SmtInterpolSolver(String scratchBase) {
+	public SmtInterpolSolver(String scratchBase, Node node) {
 		this.script = SmtInterpolUtil.getScript(scratchBase);
+		this.node = node;
+		this.length = 0;
 	}
 
 	@Override
@@ -131,7 +132,7 @@ public class SmtInterpolSolver extends Solver {
 	}
 
 	private Model extractModel(de.uni_freiburg.informatik.ultimate.logic.Model model) {
-		FunctionModel result = new FunctionModel();
+		SimpleModel result = new SimpleModel();
 		for (Entry<String, Type> entry : varTypes.entrySet()) {
 			String name = entry.getKey();
 			Type type = entry.getValue();
@@ -139,9 +140,10 @@ public class SmtInterpolSolver extends Solver {
 			Value value = SmtInterpolUtil.getValue(evaluated, type);
 			result.putValue(name, value);
 		}
-		if (functions.size() > 0) {
-			result.addImplementation(model.toString());
-		}
+		
+		SmtInterpolFunctionEvaluator funcEval = new SmtInterpolFunctionEvaluator(script, model, node, functions, length);
+		List<FunctionTable> funcs = funcEval.evaluateFuncs();
+		result.addImplementation(funcs);
 
 		return result;
 	}
@@ -149,11 +151,13 @@ public class SmtInterpolSolver extends Solver {
 	@Override
 	public void push() {
 		script.push(1);
+		length++;
 	}
 
 	@Override
 	public void pop() {
 		script.pop(1);
+		length--;
 	}
 
 	@Override

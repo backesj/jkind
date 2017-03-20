@@ -128,11 +128,6 @@ public abstract class Evaluator implements ExprVisitor<Value> {
 	}
 	
 	@Override
-	public Value visit(FunctionCallExpr e) {
-		return null;
-	}
-
-	@Override
 	public Value visit(RealExpr e) {
 		return new RealValue(BigFraction.valueOf(e.value));
 	}

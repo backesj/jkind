@@ -48,7 +48,7 @@ public abstract class Solver {
 	public abstract void stop();
 
 	protected final Map<String, Type> varTypes = new HashMap<>();
-	protected final Set<Function> functions = new HashSet<>();
+	protected final List<Function> functions = new ArrayList<>();
 
 	/**
 	 * Check if the solver supports all of the operators in the expression.

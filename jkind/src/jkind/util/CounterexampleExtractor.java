@@ -7,7 +7,6 @@ import jkind.lustre.values.IntegerValue;
 import jkind.lustre.values.Value;
 import jkind.results.Counterexample;
 import jkind.results.Signal;
-import jkind.solvers.FunctionModel;
 import jkind.solvers.Model;
 import jkind.translation.Specification;
 
@@ -32,10 +31,8 @@ public class CounterexampleExtractor {
 				signal.putValue(si.getIndex(), value);
 			}
 		}
-		if (model instanceof FunctionModel) {
-			if (((FunctionModel) model).getFuncImplementations().size() > 0) {
-				cex.setFunctionText(((FunctionModel) model).getFuncImplementations().get(0));
-			}
+		if (model.getFuncImplementations().size() > 0) {
+			cex.addFunctionTable(model.getFuncImplementations());
 		}
 		return cex;
 	}

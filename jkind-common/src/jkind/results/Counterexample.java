@@ -16,6 +16,8 @@ import jkind.lustre.values.Value;
 import jkind.results.layout.Layout;
 import jkind.results.layout.SingletonLayout;
 import jkind.util.CounterexampleFormatter;
+import jkind.util.FunctionTable;
+import jkind.util.Util;
 
 /**
  * A JKind counterexample
@@ -23,8 +25,7 @@ import jkind.util.CounterexampleFormatter;
 public final class Counterexample {
 	private final int length;
 	private final Map<String, Signal<Value>> signals = new HashMap<>();
-	private String functionText ="";
-
+	private List<FunctionTable> funcTables = new ArrayList<>();
 	public Counterexample(int length) {
 		this.length = length;
 	}
@@ -40,9 +41,16 @@ public final class Counterexample {
 		signals.put(signal.getName(), signal);
 	}
 
-	//TODO: change this
-	public void setFunctionText(String str){
-		functionText = str;
+	public void addFunctionTable(List<FunctionTable> funcTables){
+		this.funcTables.addAll(funcTables);
+	}
+	
+	public void addFunctionTable(FunctionTable funcTable){
+		this.funcTables.add(funcTable);
+	}
+	
+	public List<FunctionTable> getFunctionTables(){
+		return Util.safeList(funcTables);
 	}
 	
 	/**
@@ -197,6 +205,6 @@ public final class Counterexample {
 	}
 
 	public String toString(Layout layout) {
-		return new CounterexampleFormatter(this, layout).toString() + "\n" + functionText;
+		return new CounterexampleFormatter(this, layout).toString();
 	}
 }

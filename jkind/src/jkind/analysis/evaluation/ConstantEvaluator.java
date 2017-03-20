@@ -6,6 +6,7 @@ import java.util.Map;
 import jkind.lustre.Constant;
 import jkind.lustre.EnumType;
 import jkind.lustre.Expr;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.Program;
 import jkind.lustre.UnaryExpr;
@@ -63,5 +64,10 @@ public class ConstantEvaluator extends Evaluator {
 		} else {
 			return super.visit(e);
 		}
+	}
+
+	@Override
+	public Value visit(FunctionCallExpr e) {
+		return null;
 	}
 }

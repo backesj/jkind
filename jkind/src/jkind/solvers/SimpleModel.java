@@ -23,6 +23,7 @@ public class SimpleModel extends Model {
 				putValue(si, other.getValue(var));
 			}
 		}
+		addImplementation(other.getFuncImplementations());
 	}
 
 	public void putValue(StreamIndex si, Value value) {
