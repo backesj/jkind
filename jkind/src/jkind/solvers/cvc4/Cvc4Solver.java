@@ -8,8 +8,8 @@ import jkind.sexp.Symbol;
 import jkind.solvers.smtlib2.SmtLib2Solver;
 
 public class Cvc4Solver extends SmtLib2Solver {
-	public Cvc4Solver(String scratchBase, Node node, List<Function> functions) {
-		super(scratchBase, node, functions);
+	public Cvc4Solver(String scratchBase) {
+		super(scratchBase);
 	}
 
 	@Override

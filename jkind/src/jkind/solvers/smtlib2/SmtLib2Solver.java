@@ -3,6 +3,7 @@ package jkind.solvers.smtlib2;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import jkind.JKindException;
 import jkind.analysis.evaluation.FunctionEvaluator;
@@ -26,6 +27,7 @@ import jkind.solvers.UnknownResult;
 import jkind.solvers.UnsatResult;
 import jkind.solvers.smtlib2.SmtLib2Parser.ModelContext;
 import jkind.translation.Relation;
+import jkind.util.StreamIndex;
 import jkind.util.Util;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -34,14 +36,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 
 public abstract class SmtLib2Solver extends ProcessBasedSolver {
-	
-	private final Node node;
-	private final List<Function> functions;
-	
-	public SmtLib2Solver(String scratchBase, Node node, List<Function> functions) {
+		
+	public SmtLib2Solver(String scratchBase) {
 		super(scratchBase);
-		this.node = node;
-		this.functions = Util.safeList(functions);
 	}
 
 	@Override
@@ -99,7 +96,7 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		String status = readFromSolver();
 		if (isSat(status)) {
 			send("(get-model)");
-			result = new SatResult(parseModel(readFromSolver()));
+			result = new SatResult(parseSMTLib2Model(readFromSolver(), varTypes, getSolverName()));
 		} else if (isUnsat(status)) {
 			result = new UnsatResult();
 		} else {
@@ -189,8 +186,9 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		return line.contains(DONE);
 	}
 
-	protected Model parseModel(String string) {
-		CharStream stream = new ANTLRInputStream(string);
+	//this method is also used by the SMTInterpol solver
+	public static Model parseSMTLib2Model(String modelStr, Map<String, Type> varTypes, String solverName) {
+		CharStream stream = new ANTLRInputStream(modelStr);
 		SmtLib2Lexer lexer = new SmtLib2Lexer(stream);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		SmtLib2Parser parser = new SmtLib2Parser(tokens);
@@ -199,7 +197,7 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		ModelContext ctx = parser.model();
 
 		if (parser.getNumberOfSyntaxErrors() > 0) {
-			throw new JKindException("Error parsing " + getSolverName() + " output: " + string);
+			throw new JKindException("Error parsing " + solverName + " output: " + modelStr);
 		}
 				
 		return ModelExtractor.getModel(ctx, varTypes);
@@ -227,6 +225,6 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		for (VarDecl var : function.inputs) {
 			args.add(type(var.type));
 		}
-		send(new Cons("declare-fun", new Symbol(function.id), new Cons(args), type(function.outputs.get(0).type)));
+		send(new Cons("declare-fun", new StreamIndex(function.id, 0).getFunctionEncoded(), new Cons(args), type(function.outputs.get(0).type)));
 	}
 }

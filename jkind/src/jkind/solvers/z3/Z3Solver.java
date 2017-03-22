@@ -20,8 +20,8 @@ public class Z3Solver extends SmtLib2Solver implements MaxSatSolver {
 	private final boolean linear;
 	private int actCount = 1;
 
-	public Z3Solver(String scratchBase, Node node, List<Function> functions, boolean linear) {
-		super(scratchBase, node, functions);
+	public Z3Solver(String scratchBase, boolean linear) {
+		super(scratchBase);
 		this.linear = linear;
 	}
 
@@ -62,7 +62,7 @@ public class Z3Solver extends SmtLib2Solver implements MaxSatSolver {
 		String status = readFromSolver();
 		if (isSat(status)) {
 			send("(get-model)");
-			result = new SatResult(parseModel(readFromSolver()));
+			result = new SatResult(parseSMTLib2Model(readFromSolver(), varTypes, getSolverName()));
 		} else if (isUnsat(status)) {
 			result = new UnsatResult();
 		} else {
@@ -73,7 +73,7 @@ public class Z3Solver extends SmtLib2Solver implements MaxSatSolver {
 			if (content == null) {
 				return new UnknownResult();
 			} else {
-				result = new UnknownResult(parseModel(content));
+				result = new UnknownResult(parseSMTLib2Model(content, varTypes, getSolverName()));
 			}
 		}
 
@@ -135,7 +135,7 @@ public class Z3Solver extends SmtLib2Solver implements MaxSatSolver {
 		if (isSat(status)) {
 			send("(get-model)");
 			pop();
-			return new SatResult(parseModel(readFromSolver()));
+			return new SatResult(parseSMTLib2Model(readFromSolver(), varTypes, getSolverName()));
 		} else if (isUnsat(status)) {
 			pop();
 			return new UnsatResult();

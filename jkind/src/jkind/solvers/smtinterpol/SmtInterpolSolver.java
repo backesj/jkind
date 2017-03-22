@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+
 import jkind.JKindException;
 import jkind.analysis.evaluation.SmtInterpolFunctionEvaluator;
 import jkind.lustre.Function;
@@ -19,8 +23,14 @@ import jkind.solvers.Result;
 import jkind.solvers.SatResult;
 import jkind.solvers.SimpleModel;
 import jkind.solvers.Solver;
+import jkind.solvers.SolverParserErrorListener;
 import jkind.solvers.UnknownResult;
 import jkind.solvers.UnsatResult;
+import jkind.solvers.smtlib2.ModelExtractor;
+import jkind.solvers.smtlib2.SmtLib2Lexer;
+import jkind.solvers.smtlib2.SmtLib2Parser;
+import jkind.solvers.smtlib2.SmtLib2Parser.ModelContext;
+import jkind.solvers.smtlib2.SmtLib2Solver;
 import jkind.translation.Relation;
 import jkind.util.FunctionTable;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -33,13 +43,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class SmtInterpolSolver extends Solver {
 	private final Script script;
-	private final Node node;
-	private int length;
 
-	public SmtInterpolSolver(String scratchBase, Node node) {
+	public SmtInterpolSolver(String scratchBase) {
 		this.script = SmtInterpolUtil.getScript(scratchBase);
-		this.node = node;
-		this.length = 0;
 	}
 
 	@Override
@@ -132,32 +138,33 @@ public class SmtInterpolSolver extends Solver {
 	}
 
 	private Model extractModel(de.uni_freiburg.informatik.ultimate.logic.Model model) {
-		SimpleModel result = new SimpleModel();
-		for (Entry<String, Type> entry : varTypes.entrySet()) {
-			String name = entry.getKey();
-			Type type = entry.getValue();
-			Term evaluated = model.evaluate(script.term(name));
-			Value value = SmtInterpolUtil.getValue(evaluated, type);
-			result.putValue(name, value);
-		}
-		
-		SmtInterpolFunctionEvaluator funcEval = new SmtInterpolFunctionEvaluator(script, model, node, functions, length);
-		List<FunctionTable> funcs = funcEval.evaluateFuncs();
-		result.addImplementation(funcs);
+		return SmtLib2Solver.parseSMTLib2Model(model.toString(), varTypes, "SMTInterpol");
+	}
+	
+	protected Model parseModel(String string) {
+		CharStream stream = new ANTLRInputStream(string);
+		SmtLib2Lexer lexer = new SmtLib2Lexer(stream);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		SmtLib2Parser parser = new SmtLib2Parser(tokens);
+		parser.removeErrorListeners();
+		parser.addErrorListener(new SolverParserErrorListener());
+		ModelContext ctx = parser.model();
 
-		return result;
+		if (parser.getNumberOfSyntaxErrors() > 0) {
+			throw new JKindException("Error parsing SMTInterpol output: " + string);
+		}
+				
+		return ModelExtractor.getModel(ctx, varTypes);
 	}
 
 	@Override
 	public void push() {
 		script.push(1);
-		length++;
 	}
 
 	@Override
 	public void pop() {
 		script.pop(1);
-		length--;
 	}
 
 	@Override

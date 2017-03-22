@@ -8,6 +8,7 @@ import jkind.lustre.BinaryExpr;
 import jkind.lustre.BinaryOp;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.UnaryExpr;
 import jkind.lustre.UnaryOp;
@@ -109,5 +110,10 @@ public class ModelReconstructionEvaluator extends Evaluator {
 		} else {
 			return super.visit(e);
 		}
+	}
+
+	@Override
+	public Value visit(FunctionCallExpr e) {
+		throw new IllegalArgumentException("Not expecting function calls");
 	}
 }

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import jkind.JKindSettings;
+import jkind.analysis.evaluation.SmtLibFunctionEvaluator;
 import jkind.engines.invariant.InvariantSet;
 import jkind.engines.messages.BaseStepMessage;
 import jkind.engines.messages.InductiveCounterexampleMessage;
@@ -27,6 +28,7 @@ import jkind.solvers.SatResult;
 import jkind.solvers.UnknownResult;
 import jkind.solvers.UnsatResult;
 import jkind.translation.Specification;
+import jkind.util.FunctionTable;
 import jkind.util.SexpUtil;
 import jkind.util.StreamIndex;
 
@@ -99,6 +101,11 @@ public class KInductionEngine extends SolverBasedEngine {
 				possiblyValid.removeAll(bad);
 				if (result instanceof UnknownResult) {
 					sendUnknown(bad);
+				}else{
+					//generate the functions out of the model
+					SmtLibFunctionEvaluator eval = new SmtLibFunctionEvaluator(spec.node, model, k);
+					List<FunctionTable> funcs = eval.evaluateFuncs();
+					model.addImplementation(funcs);
 				}
 				sendInductiveCounterexamples(bad, k + 1, model);
 			} else if (result instanceof UnsatResult) {

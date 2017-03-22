@@ -6,12 +6,14 @@ import java.util.Set;
 
 import jkind.lustre.NamedType;
 import jkind.lustre.Type;
+import jkind.lustre.values.FunctionValue;
 import jkind.lustre.values.IntegerValue;
 import jkind.lustre.values.RealValue;
 import jkind.lustre.values.Value;
 import jkind.sexp.Sexp;
 import jkind.solvers.Model;
 import jkind.util.BigFraction;
+import jkind.util.StreamIndex;
 import jkind.util.Util;
 
 public class SmtLib2Model extends Model {
@@ -29,6 +31,9 @@ public class SmtLib2Model extends Model {
 	public Value getValue(String name) {
 		Sexp sexp = values.get(name);
 		Type type = varTypes.get(name);
+		if(StreamIndex.isFunctionEncoded(name)){
+			return new FunctionValue(name, sexp);
+		}
 		if (sexp == null) {
 			return Util.getDefaultValue(type);
 		}

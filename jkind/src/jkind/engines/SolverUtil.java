@@ -25,15 +25,15 @@ public class SolverUtil {
 		case YICES:
 			return new YicesSolver(scratchBase, YicesArithOnlyCheck.check(node));
 		case CVC4:
-			return new Cvc4Solver(scratchBase, node, functions);
+			return new Cvc4Solver(scratchBase);
 		case Z3:
-			return new Z3Solver(scratchBase, node, functions, LinearChecker.isLinear(node));
+			return new Z3Solver(scratchBase, LinearChecker.isLinear(node));
 		case YICES2:
-			return new Yices2Solver(scratchBase, node, functions);
+			return new Yices2Solver(scratchBase);
 		case MATHSAT:
-			return new MathSatSolver(scratchBase, node, functions);
+			return new MathSatSolver(scratchBase);
 		case SMTINTERPOL:
-			return new SmtInterpolSolver(scratchBase, node);
+			return new SmtInterpolSolver(scratchBase);
 		}
 		throw new IllegalArgumentException("Unknown solver: " + solverOption);
 	}

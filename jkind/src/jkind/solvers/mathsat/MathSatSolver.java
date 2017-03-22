@@ -29,8 +29,8 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 public class MathSatSolver extends SmtLib2Solver {
-	public MathSatSolver(String scratchBase, Node node, List<Function> functions) {
-		super(scratchBase, node, functions);
+	public MathSatSolver(String scratchBase) {
+		super(scratchBase);
 	}
 
 	@Override
@@ -55,7 +55,7 @@ public class MathSatSolver extends SmtLib2Solver {
 		String status = readFromSolver();
 		if (isSat(status)) {
 			send("(get-model)");
-			result = new SatResult(parseModel(readFromSolver()));
+			result = new SatResult(parseMathSatModel(readFromSolver()));
 		} else if (isUnsat(status)) {
 			result = new UnsatResult();
 		} else {
@@ -91,8 +91,7 @@ public class MathSatSolver extends SmtLib2Solver {
 		return parseUnsatAssumptions(readFromSolver());
 	}
 
-	@Override
-	protected Model parseModel(String string) {
+	protected Model parseMathSatModel(String string) {
 		MathSatParser parser = getParser(string);
 		ModelContext ctx = parser.model();
 		ensureNoParseError(parser, string);

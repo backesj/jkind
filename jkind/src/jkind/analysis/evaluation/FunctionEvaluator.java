@@ -31,13 +31,12 @@ public abstract class FunctionEvaluator extends Evaluator {
 
 	protected final Node node;
 	protected final int length;
-	protected final Map<String, FunctionTable> funcDefs = new HashMap<>();
+	private final Map<String, FunctionTable> funcDefs = new HashMap<>();
 	protected int currentDepth;
 	protected final Map<IdExpr, Equation> idToEqMap = new HashMap<>();
 	protected final Map<String, Type> idToTypeMap = new HashMap<>();
-	protected final Map<String, Type> funcToOutputTypeMap = new HashMap<>();
 
-	public FunctionEvaluator(Node node, List<Function> functions, int length) {
+	public FunctionEvaluator(Node node, int length) {
 		this.node = node;
 		this.length = length;
 
@@ -56,10 +55,6 @@ public abstract class FunctionEvaluator extends Evaluator {
 		}
 		for (VarDecl var : node.locals) {
 			idToTypeMap.put(var.id, var.type);
-		}
-
-		for (Function func : functions) {
-			funcToOutputTypeMap.put(func.id, func.outputs.get(0).type);
 		}
 
 	}
@@ -97,6 +92,19 @@ public abstract class FunctionEvaluator extends Evaluator {
 			return val;
 		}
 		return super.visit(e);
+	}
+	
+	
+	protected void addFuncRow(String funcName, List<Value> inputVals, Value outputVal){
+		FunctionTable table = funcDefs.get(funcName);
+
+		if (table == null) {
+			table = new FunctionTable(funcName);
+			funcDefs.put(funcName, table);
+		}
+		
+		FunctionTableRow row = new FunctionTableRow(inputVals, outputVal);
+		table.addRow(row);
 	}
 
 }

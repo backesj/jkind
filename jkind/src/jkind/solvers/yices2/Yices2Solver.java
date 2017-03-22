@@ -3,7 +3,6 @@ package jkind.solvers.yices2;
 import java.util.List;
 
 import jkind.JKindException;
-import jkind.lustre.Function;
 import jkind.lustre.Node;
 import jkind.sexp.Symbol;
 import jkind.solvers.Model;
@@ -17,8 +16,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 public class Yices2Solver extends SmtLib2Solver {
-	public Yices2Solver(String scratchBase, Node node, List<Function> functions) {
-		super(scratchBase, node, functions);
+	public Yices2Solver(String scratchBase) {
+		super(scratchBase);
 	}
 
 	@Override
@@ -48,8 +47,8 @@ public class Yices2Solver extends SmtLib2Solver {
 		return activationLiterals;
 	}
 
-	@Override
-	protected Model parseModel(String string) {
+	
+	protected Model parseYices2Model(String string) {
 		CharStream stream = new ANTLRInputStream(string);
 		Yices2Lexer lexer = new Yices2Lexer(stream);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);

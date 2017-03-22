@@ -1,7 +1,9 @@
 package jkind.analysis.evaluation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -11,6 +13,7 @@ import jkind.lustre.Function;
 import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.Node;
+import jkind.lustre.Type;
 import jkind.lustre.values.BooleanValue;
 import jkind.lustre.values.IntegerValue;
 import jkind.lustre.values.RealValue;
@@ -24,13 +27,16 @@ public class SmtInterpolFunctionEvaluator extends FunctionEvaluator {
 
 	private final Model model;
 	private final Script script;
+	private final Map<String, Type> funcToOutputTypeMap = new HashMap<>();
 
 	
 	public SmtInterpolFunctionEvaluator(Script script, Model model, Node node, List<Function> functions, int length) {
-		super(node, functions, length);
+		super(node, length);
 		this.model = model;
 		this.script = script;
-
+		for (Function func : functions) {
+			funcToOutputTypeMap.put(func.id, func.outputs.get(0).type);
+		}
 	}
 	
 	@Override
@@ -48,12 +54,6 @@ public class SmtInterpolFunctionEvaluator extends FunctionEvaluator {
 
 	@Override
 	public Value visit(FunctionCallExpr e) {
-		FunctionTable table = funcDefs.get(e.function);
-
-		if (table == null) {
-			table = new FunctionTable(e.function);
-			funcDefs.put(e.function, table);
-		}
 
 		Term[] args = new Term[e.args.size()];
 		List<Value> inputs = new ArrayList<>();
@@ -65,8 +65,7 @@ public class SmtInterpolFunctionEvaluator extends FunctionEvaluator {
 
 		Term evaluated = model.evaluate(script.term(e.function, args));
 		Value val = SmtInterpolUtil.getValue(evaluated, funcToOutputTypeMap.get(e.function));
-		FunctionTableRow row = new FunctionTableRow(inputs, val);
-		table.addRow(row);
+		addFuncRow(e.function, inputs, val);
 
 		return val;
 	}

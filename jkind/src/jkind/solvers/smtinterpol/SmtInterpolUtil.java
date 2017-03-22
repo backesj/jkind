@@ -22,6 +22,7 @@ import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
 import jkind.util.BigFraction;
+import jkind.util.StreamIndex;
 import jkind.util.Util;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -173,7 +174,8 @@ public class SmtInterpolUtil {
 	}
 
 	public static void decalreFunction(Function function, Script script) {
-		script.declareFun(function.id, SmtInterpolUtil.varsToSorts(function.inputs, script),
+		script.declareFun(new StreamIndex(function.id, 0).getFunctionEncoded().str,
+				SmtInterpolUtil.varsToSorts(function.inputs, script),
 				SmtInterpolUtil.varsToSorts(function.outputs, script)[0]);
 	}
 }

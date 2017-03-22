@@ -23,6 +23,10 @@ public class StreamIndex {
 		return index;
 	}
 
+	public Symbol getFunctionEncoded(){
+		return new Symbol("$$" + stream);
+	}
+	
 	public Symbol getEncoded() {
 		return new Symbol("$" + stream + getSuffix(index));
 	}
@@ -72,9 +76,13 @@ public class StreamIndex {
 	}
 
 	private static boolean isEncodedStreamIndex(String var) {
-		return var.startsWith("$") && var.substring(1).contains("$");
+		return var.startsWith("$") && !var.startsWith("$$") && var.substring(1).contains("$");
 	}
 
+	public static boolean isFunctionEncoded(String name){
+		return name.startsWith("$$");
+	}
+	
 	private static int getIndex(String indexStr) {
 		if (indexStr.startsWith("~")) {
 			return -Integer.parseInt(indexStr.substring(1));
