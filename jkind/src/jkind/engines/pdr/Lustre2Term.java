@@ -31,6 +31,7 @@ import jkind.lustre.UnaryExpr;
 import jkind.lustre.VarDecl;
 import jkind.lustre.visitors.ExprVisitor;
 import jkind.solvers.smtinterpol.ScriptUser;
+import jkind.util.StreamIndex;
 import jkind.util.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -276,6 +277,6 @@ public class Lustre2Term extends ScriptUser implements ExprVisitor<Term> {
 		for(int i = 0; i < e.args.size(); i++){
 			params[i] = e.args.get(i).accept(this);
 		}
-		return term(id, params);
+		return term(new StreamIndex(e.function, 0).getFunctionEncoded().toString(), params);
 	}
 }

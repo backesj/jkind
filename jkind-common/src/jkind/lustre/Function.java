@@ -17,9 +17,6 @@ public class Function extends Ast {
 		this.id = id;
 		this.inputs = Util.safeList(inputs);
 		this.outputs = Util.safeList(outputs);
-		if(outputs.size() != 1){
-			throw new IllegalArgumentException("we currently only support functions with a single output");
-		}
 	}
 	
 	public Function(String id, List<VarDecl> inputs, List<VarDecl> outputs) {

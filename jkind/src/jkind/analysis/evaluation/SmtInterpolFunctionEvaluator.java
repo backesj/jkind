@@ -29,7 +29,6 @@ public class SmtInterpolFunctionEvaluator extends FunctionEvaluator {
 	private final Script script;
 	private final Map<String, Type> funcToOutputTypeMap = new HashMap<>();
 
-	
 	public SmtInterpolFunctionEvaluator(Script script, Model model, Node node, List<Function> functions, int length) {
 		super(node, length);
 		this.model = model;
@@ -38,7 +37,7 @@ public class SmtInterpolFunctionEvaluator extends FunctionEvaluator {
 			funcToOutputTypeMap.put(func.id, func.outputs.get(0).type);
 		}
 	}
-	
+
 	@Override
 	public Value visit(IdExpr e) {
 		Equation eq = idToEqMap.get(e);
@@ -63,13 +62,14 @@ public class SmtInterpolFunctionEvaluator extends FunctionEvaluator {
 			args[i] = model.evaluate(valueToTerm(val));
 		}
 
-		Term evaluated = model.evaluate(script.term(e.function, args));
+		Term evaluated = model
+				.evaluate(script.term(new StreamIndex(e.function, 0).getFunctionEncoded().toString(), args));
 		Value val = SmtInterpolUtil.getValue(evaluated, funcToOutputTypeMap.get(e.function));
 		addFuncRow(e.function, inputs, val);
 
 		return val;
 	}
-	
+
 	private Term valueToTerm(Value value) {
 		if (value instanceof BooleanValue) {
 			return script.term(value.toString());
@@ -83,7 +83,5 @@ public class SmtInterpolFunctionEvaluator extends FunctionEvaluator {
 		throw new IllegalArgumentException("Did not expect value of type " + value.getClass());
 
 	}
-
-	
 
 }

@@ -14,6 +14,7 @@ import jkind.lustre.Constant;
 import jkind.lustre.EnumType;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.IdExpr;
 import jkind.lustre.NamedType;
 import jkind.lustre.Node;
@@ -39,6 +40,7 @@ public class StaticAnalyzer {
 		valid = valid && ConstantDependencyChecker.check(program);
 		valid = valid && nodesUnique(program);
 		valid = valid && variablesUnique(program);
+		valid = valid && checkFunctions(program);
 		valid = valid && TypeChecker.check(program);
 		valid = valid && SubrangesNonempty.check(program);
 		valid = valid && ArraysNonempty.check(program);
@@ -59,6 +61,20 @@ public class StaticAnalyzer {
 		if (!valid) {
 			System.exit(ExitCodes.STATIC_ANALYSIS_ERROR);
 		}
+	}
+
+	private static boolean checkFunctions(Program program) {
+		for(Function func : program.functions){
+			if(func.outputs.size() != 1){
+				if(func.outputs.size() == 0){
+					StdErr.error(func.location, "Functions must have an output variable");
+					return false;
+				}
+				StdErr.error(func.outputs.get(1).location, "JKind currently only supports functions with a single outputs");;
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static void checkSolverLimitations(Program program, SolverOption solver) {
