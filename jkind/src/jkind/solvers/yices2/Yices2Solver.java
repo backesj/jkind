@@ -38,7 +38,7 @@ public class Yices2Solver extends SmtLib2Solver {
 	@Override
 	public void initialize() {
 		send("(set-option :produce-models true)");
-		send("(set-logic QF_LIRA)");
+		send("(set-logic QF_UFLIRA)");
 	}
 
 	@Override
