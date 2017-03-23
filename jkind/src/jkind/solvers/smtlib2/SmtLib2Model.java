@@ -31,8 +31,12 @@ public class SmtLib2Model extends Model {
 	public Value getValue(String name) {
 		Sexp sexp = values.get(name);
 		Type type = varTypes.get(name);
-		if(StreamIndex.isFunctionEncoded(name)){
-			return new FunctionValue(name, sexp);
+		if (StreamIndex.isFunctionEncoded(name)) {
+			if (sexp != null) {
+				return new FunctionValue(name, sexp);
+			} else {
+				return null;
+			}
 		}
 		if (sexp == null) {
 			return Util.getDefaultValue(type);
