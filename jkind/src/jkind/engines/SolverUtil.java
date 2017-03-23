@@ -23,7 +23,8 @@ public class SolverUtil {
 	public static Solver getSolver(SolverOption solverOption, String scratchBase, Node node, List<Function> functions) {
 		switch (solverOption) {
 		case YICES:
-			return new YicesSolver(scratchBase, YicesArithOnlyCheck.check(node));
+			boolean arithOnly = YicesArithOnlyCheck.check(node) && functions.size() == 0;
+			return new YicesSolver(scratchBase, arithOnly);
 		case CVC4:
 			return new Cvc4Solver(scratchBase);
 		case Z3:

@@ -61,7 +61,7 @@ public class ModelExtractor {
 			int i = 0;
 			for (BodyContext sym : symbols) {				
 				Sexp bodySexp = sexp(sym);
-				argVals.add(sexp(sym));
+				argVals.add(bodySexp);
 				argDefs.add(new Cons(fnArgPrefix + i++, sexpType(bodySexp)));
 			}
 			Sexp args = new Cons(argDefs);
