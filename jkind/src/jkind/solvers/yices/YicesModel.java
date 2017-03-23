@@ -38,7 +38,11 @@ public class YicesModel extends Model {
 	public Value getValue(String name) {
 		Value value = values.get(getAlias(name));
 		if (value == null) {
-			return Util.getDefaultValue(varTypes.get(name));
+			Type type = varTypes.get(name);
+			if(type == null){
+				return null;
+			}
+			return Util.getDefaultValue(type);
 		} else {
 			return value;
 		}

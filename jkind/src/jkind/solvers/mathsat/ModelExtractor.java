@@ -3,14 +3,9 @@ package jkind.solvers.mathsat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
-
 import jkind.JKindException;
 import jkind.lustre.Type;
-import jkind.lustre.values.BooleanValue;
 import jkind.lustre.values.FunctionValue;
-import jkind.lustre.values.IntegerValue;
-import jkind.lustre.values.RealValue;
 import jkind.lustre.values.Value;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
@@ -22,11 +17,8 @@ import jkind.solvers.mathsat.MathSatParser.FnAppContext;
 import jkind.solvers.mathsat.MathSatParser.IdContext;
 import jkind.solvers.mathsat.MathSatParser.ModelContext;
 import jkind.solvers.mathsat.MathSatParser.SymbolBodyContext;
-import jkind.solvers.mathsat.MathSatParser.SymbolContext;
 import jkind.solvers.smtlib2.Quoting;
 import jkind.solvers.smtlib2.SmtLib2Model;
-import jkind.solvers.smtlib2.SmtLib2Parser.ArgContext;
-import jkind.solvers.smtlib2.SmtLib2Parser.DefineContext;
 
 public class ModelExtractor {
 	private static final String fnArgPrefix = "x";

@@ -58,7 +58,9 @@ public class SmtLibFunctionEvaluator extends FunctionEvaluator {
 
 		for (String name : names) {
 			Value val = normalModel.getValue(new StreamIndex(name, 0).getFunctionEncoded().str);
-			bodies.put(name, ((FunctionValue) val).getBody());
+			if(val != null){ //if null then the cex did not report a model for the function
+				bodies.put(name, ((FunctionValue) val).getBody());
+			}
 		}
 
 		return bodies;
@@ -76,7 +78,12 @@ public class SmtLibFunctionEvaluator extends FunctionEvaluator {
 		for (Expr expr : e.args) {
 			inputValues.add(expr.accept(this));
 		}
-		Cons body = (Cons) funcBodies.get(e.function);
+		Sexp funcSexp = funcBodies.get(e.function);
+		if(funcSexp == null){
+			//the model did not return a body for this function
+			return null;
+		}
+		Cons body = (Cons) funcSexp;
 		// the first part of the cons contains the args
 		Cons argsExpr = (Cons) body.head;
 

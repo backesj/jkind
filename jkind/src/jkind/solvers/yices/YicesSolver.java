@@ -28,6 +28,7 @@ import jkind.solvers.Result;
 import jkind.solvers.UnsatResult;
 import jkind.solvers.yices.YicesParser.ResultContext;
 import jkind.translation.Relation;
+import jkind.util.StreamIndex;
 import jkind.util.Util;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -314,8 +315,26 @@ public class YicesSolver extends ProcessBasedSolver implements MaxSatSolver {
 	}
 
 	@Override
-	protected void declareImplemented(Function function) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException("We do not support uninterpretted functions with yices");
+	public void declareImplemented(Function fn) {
+		if (fn.inputs.isEmpty()) {
+			declareNullaryFunction(fn);
+		} else {
+			declareFunction(fn);
+		}
+	}
+
+	private void declareNullaryFunction(Function fn) {
+		send(new Cons("define", new StreamIndex(fn.id,0).getFunctionEncoded(), new Symbol("::"),
+				type(fn.outputs.get(0).type)).toString());
+	}
+
+	private void declareFunction(Function fn) {
+		List<Sexp> args = new ArrayList<>();
+		for (VarDecl input : fn.inputs) {
+			args.add(type(input.type));
+		}
+		args.add(type(fn.outputs.get(0).type));
+		send(new Cons("define", new StreamIndex(fn.id,0).getFunctionEncoded(), new Symbol("::"), new Cons("->",
+				args)).toString());
 	}
 }
