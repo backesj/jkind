@@ -9,6 +9,7 @@ import jkind.sexp.Symbol;
 public class StreamIndex {
 	private final String stream;
 	private final int index;
+	public static final String funcPrefix = "$$";
 
 	public StreamIndex(String stream, int index) {
 		this.stream = stream;
@@ -24,7 +25,7 @@ public class StreamIndex {
 	}
 
 	public Symbol getFunctionEncoded(){
-		return new Symbol("$$" + stream);
+		return new Symbol(funcPrefix + stream);
 	}
 	
 	public Symbol getEncoded() {

@@ -13,6 +13,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import jkind.JKindException;
 import jkind.engines.pdr.Lustre2Term;
 import jkind.lustre.BinaryExpr;
 import jkind.lustre.BinaryOp;
@@ -23,6 +24,7 @@ import jkind.lustre.IdExpr;
 import jkind.lustre.IfThenElseExpr;
 import jkind.lustre.IntExpr;
 import jkind.lustre.RealExpr;
+import jkind.util.StreamIndex;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -75,7 +77,11 @@ public class Term2Expr {
 			for (Term term : at.getParameters()) {
 				params.add(expr(term));
 			}
-			return new FunctionCallExpr(at.getFunction().getName(), params);
+			String funcName = at.getFunction().getName();
+			if(!funcName.startsWith(StreamIndex.funcPrefix)){
+				throw new JKindException("We expect all functions to have the proper prefix");
+			}
+			return new FunctionCallExpr(funcName.substring(StreamIndex.funcPrefix.length()), params);
 		}
 
 	}

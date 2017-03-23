@@ -99,7 +99,7 @@ public class ResultExtractorListener extends YicesBaseListener {
 			argVals.add(bodySexp);
 			argDefs.add(new Cons(fnArgPrefix + i, sexpType(bodySexp)));
 		}
-		Sexp bodyVal = sexp(ctx.value(ctx.value().size()-1));
+		Sexp bodyVal = sexp(ctx.value(ctx.value().size() - 1));
 		Sexp args = new Cons(argDefs);
 		Sexp fnBody = null;
 		if (fnDef == null) {
@@ -138,20 +138,16 @@ public class ResultExtractorListener extends YicesBaseListener {
 	}
 
 	private static Symbol sexpType(Sexp sexp) {
-			String str = sexp.toString();
+		String str = sexp.toString();
 
-			if (str.equals("true") || str.equals("false")) {
-				return new Symbol("Bool");
-			}
-			try {
-				Integer.parseInt(str);
-				return new Symbol("Int");
-			} catch (NumberFormatException e) {
-			}
-			if(!str.contains("/")){
-				throw new JKindException("Parsed unexpected value: '" + str + "' from MathSAT result");
-			}
+		if (str.equals("true") || str.equals("false")) {
+			return new Symbol("Bool");
+		}
+
+		if (str.contains("/")) {
 			return new Symbol("Real");
+		}
+		return new Symbol("Int");
 	}
 
 	private static String getId(IdContext id) {
@@ -176,7 +172,7 @@ public class ResultExtractorListener extends YicesBaseListener {
 			}
 			return value;
 		}
-		if(bool != null){
+		if (bool != null) {
 			return new Symbol(bool.getText());
 		}
 		throw new IllegalArgumentException();
