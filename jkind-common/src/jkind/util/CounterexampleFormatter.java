@@ -33,10 +33,10 @@ public class CounterexampleFormatter {
 	private String footer() {
 		List<FunctionTable> funcTables = cex.getFunctionTables();
 		StringBuilder sb = new StringBuilder();
-		
+
+		sb.append(NEWLINE);
+		sb.append("FUNCTIONS");
 		for(FunctionTable funcTable : funcTables){
-			sb.append(NEWLINE);
-			sb.append("Functions:");
 			sb.append(NEWLINE);
 			sb.append(funcTable.toString());
 		}
