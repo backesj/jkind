@@ -36,6 +36,8 @@ public class CounterexampleFormatter {
 		
 		for(FunctionTable funcTable : funcTables){
 			sb.append(NEWLINE);
+			sb.append("Functions:");
+			sb.append(NEWLINE);
 			sb.append(funcTable.toString());
 		}
 		

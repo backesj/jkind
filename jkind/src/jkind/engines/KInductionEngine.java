@@ -82,7 +82,7 @@ public class KInductionEngine extends SolverBasedEngine {
 		result.removeAll(list2);
 		return result;
 	}
-	
+
 	private void checkProperties(int k) {
 		List<String> possiblyValid = new ArrayList<>(properties);
 
@@ -101,9 +101,9 @@ public class KInductionEngine extends SolverBasedEngine {
 				possiblyValid.removeAll(bad);
 				if (result instanceof UnknownResult) {
 					sendUnknown(bad);
-				}else{
-					//generate the functions out of the model
-					SmtLibFunctionEvaluator eval = new SmtLibFunctionEvaluator(spec.node, model, k);
+				} else {
+					// generate the functions out of the model
+					SmtLibFunctionEvaluator eval = new SmtLibFunctionEvaluator(spec.node, spec.functions, model, k);
 					List<FunctionTable> funcs = eval.evaluateFuncs();
 					model.addImplementation(funcs);
 				}

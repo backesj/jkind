@@ -41,11 +41,10 @@ public class FunctionTableRow {
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		for(Value val : inputs){
-			sb.append(val.toString());
-			sb.append(" ");
+			sb.append(String.format("%-10s", val.toString() + " "));
 		}
 		sb.append("| ");
-		sb.append(output.toString());
+		sb.append(String.format("%-10s", output.toString()));
 		return sb.toString();
 	}
 

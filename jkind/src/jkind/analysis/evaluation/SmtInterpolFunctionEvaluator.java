@@ -30,7 +30,7 @@ public class SmtInterpolFunctionEvaluator extends FunctionEvaluator {
 	private final Map<String, Type> funcToOutputTypeMap = new HashMap<>();
 
 	public SmtInterpolFunctionEvaluator(Script script, Model model, Node node, List<Function> functions, int length) {
-		super(node, length);
+		super(node, functions, length);
 		this.model = model;
 		this.script = script;
 		for (Function func : functions) {

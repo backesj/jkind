@@ -72,6 +72,21 @@ public class ProgramBuilder {
 		this.nodes.clear();
 		return this;
 	}
+	
+	public ProgramBuilder addFunction(Function function){
+		this.functions.add(function);
+		return this;
+	}
+	
+	public ProgramBuilder addFunctions(Collection<Function> functions){
+		this.functions.addAll(functions);
+		return this;
+	}
+	
+	public ProgramBuilder clearFunctions() {
+		this.functions.clear();
+		return this;
+	}
 
 	public ProgramBuilder setMain(String main) {
 		this.main = main;

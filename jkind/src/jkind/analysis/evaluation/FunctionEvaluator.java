@@ -1,10 +1,14 @@
 package jkind.analysis.evaluation;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -23,6 +27,7 @@ import jkind.lustre.values.IntegerValue;
 import jkind.lustre.values.RealValue;
 import jkind.lustre.values.Value;
 import jkind.solvers.smtinterpol.SmtInterpolUtil;
+import jkind.translation.FlattenFunctionsWithRecords;
 import jkind.util.FunctionTable;
 import jkind.util.FunctionTableRow;
 import jkind.util.StreamIndex;
@@ -31,14 +36,17 @@ public abstract class FunctionEvaluator extends Evaluator {
 
 	protected final Node node;
 	protected final int length;
-	private final Map<String, FunctionTable> funcDefs = new HashMap<>();
+	private final Map<String, FunctionTable> funcTables = new HashMap<>();
+	private final Map<String, Function> lustreFuncDefs = new HashMap<>();
 	protected int currentDepth;
 	protected final Map<IdExpr, Equation> idToEqMap = new HashMap<>();
 	protected final Map<String, Type> idToTypeMap = new HashMap<>();
+	private final List<Function> funcs;
 
-	public FunctionEvaluator(Node node, int length) {
+	public FunctionEvaluator(Node node, List<Function> funcs, int length) {
 		this.node = node;
 		this.length = length;
+		this.funcs = funcs;
 
 		for (Equation eq : node.equations) {
 			if (eq.lhs.size() != 1) {
@@ -57,6 +65,10 @@ public abstract class FunctionEvaluator extends Evaluator {
 			idToTypeMap.put(var.id, var.type);
 		}
 
+		for (Function func : funcs) {
+			lustreFuncDefs.put(func.id, func);
+		}
+
 	}
 
 	public List<FunctionTable> evaluateFuncs() {
@@ -73,15 +85,14 @@ public abstract class FunctionEvaluator extends Evaluator {
 			}
 			currentDepth--;
 		}
-		
+
 		List<FunctionTable> tables = new ArrayList<>();
-		for(Entry<String, FunctionTable> entry : funcDefs.entrySet()){
+		for (Entry<String, FunctionTable> entry : funcTables.entrySet()) {
 			tables.add(entry.getValue());
 		}
 
 		return tables;
 	}
-
 
 	@Override
 	public Value visit(UnaryExpr e) {
@@ -93,16 +104,18 @@ public abstract class FunctionEvaluator extends Evaluator {
 		}
 		return super.visit(e);
 	}
-	
-	
-	protected void addFuncRow(String funcName, List<Value> inputVals, Value outputVal){
-		FunctionTable table = funcDefs.get(funcName);
+
+	protected void addFuncRow(String funcName, List<Value> inputVals, Value outputVal) {
+		FunctionTable table = funcTables.get(funcName);
 
 		if (table == null) {
-			table = new FunctionTable(funcName);
-			funcDefs.put(funcName, table);
+			Function func = lustreFuncDefs.get(funcName);
+			List<String> inputs = func.inputs.stream().map(v -> v.id).collect(Collectors.toList());
+			table = new FunctionTable(funcName.replace(FlattenFunctionsWithRecords.functionRecordDelimeter, "."),
+					inputs);
+			funcTables.put(funcName, table);
 		}
-		
+
 		FunctionTableRow row = new FunctionTableRow(inputVals, outputVal);
 		table.addRow(row);
 	}

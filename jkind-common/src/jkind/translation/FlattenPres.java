@@ -8,10 +8,12 @@ import jkind.lustre.Expr;
 import jkind.lustre.Function;
 import jkind.lustre.IdExpr;
 import jkind.lustre.Node;
+import jkind.lustre.Program;
 import jkind.lustre.UnaryExpr;
 import jkind.lustre.UnaryOp;
 import jkind.lustre.VarDecl;
 import jkind.lustre.builders.NodeBuilder;
+import jkind.lustre.builders.ProgramBuilder;
 import jkind.lustre.visitors.TypeAwareAstMapVisitor;
 
 /**
@@ -23,8 +25,11 @@ public class FlattenPres extends TypeAwareAstMapVisitor {
 		super(funcs);
 	}
 
-	public static Node node(Node node, List<Function> funcs) {
-		return new FlattenPres(funcs).visit(node);
+	public static Program program(Program program) {
+		Node node = program.getMainNode();
+		List<Function> funcs = program.functions;
+		node = new FlattenPres(funcs).visit(node);
+		return new ProgramBuilder(program).clearNodes().addNode(node).build();
 	}
 
 	private List<VarDecl> newLocals = new ArrayList<>();

@@ -62,7 +62,7 @@ public class BmcEngine extends SolverBasedEngine {
 				properties.removeAll(bad);
 				
 				//generate the functions out of the model
-				SmtLibFunctionEvaluator eval = new SmtLibFunctionEvaluator(spec.node, model, k);
+				SmtLibFunctionEvaluator eval = new SmtLibFunctionEvaluator(spec.node, spec.functions, model, k);
 				List<FunctionTable> funcs = eval.evaluateFuncs();
 				model.addImplementation(funcs);
 				

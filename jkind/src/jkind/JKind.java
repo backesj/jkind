@@ -25,7 +25,8 @@ public class JKind {
 				}
 			}
 
-			Node main = Translate.translate(program);
+			program = Translate.translate(program);
+			Node main = program.getMainNode();
 			Specification userSpec = new Specification(main, program.functions, settings.slicing);
 			Specification analysisSpec = getAnalysisSpec(userSpec, settings);
 

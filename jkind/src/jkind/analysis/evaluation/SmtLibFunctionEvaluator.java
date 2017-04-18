@@ -10,6 +10,7 @@ import java.util.Set;
 
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
+import jkind.lustre.Function;
 import jkind.lustre.FunctionCallExpr;
 import jkind.lustre.IdExpr;
 import jkind.lustre.Node;
@@ -30,8 +31,8 @@ public class SmtLibFunctionEvaluator extends FunctionEvaluator {
 	private final Model normalModel;
 	private final Map<String, Sexp> funcBodies;
 
-	public SmtLibFunctionEvaluator(Node node, Model model, int length) {
-		super(node, length);
+	public SmtLibFunctionEvaluator(Node node, List<Function> funcs, Model model, int length) {
+		super(node, funcs, length);
 		this.normalModel = model;
 		this.funcBodies = cacheFuncBodies(node);
 	}
