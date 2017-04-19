@@ -18,11 +18,12 @@ import jkind.util.Util;
 
 public class DependencyMap {
 	private Map<Dependency, DependencySet> map = new HashMap<>();
+	private DependencySet allAssertionDependencies = new DependencySet();
 
-	public DependencyMap(Node node, List<String> roots) {
+	public DependencyMap(Node node, List<String> roots, boolean sliceAssertions) {
 		computeOneStepDependencies(node);
 		analyzeAssertions(node.assertions);
-		closeDependencies(roots);
+		closeDependencies(roots, sliceAssertions);
 	}
 
 	private void computeOneStepDependencies(Node node) {
@@ -68,15 +69,20 @@ public class DependencyMap {
 			// All variables in an assertion depend on all other variables in it
 			for (Dependency dep : assertionDependencies) {
 				map.get(dep).addAll(assertionDependencies);
+				allAssertionDependencies.add(dep);
 			}
 		}
 	}
 
-	private void closeDependencies(List<String> roots) {
+	private void closeDependencies(List<String> roots, boolean sliceAssertions) {
 		Map<Dependency, DependencySet> transMap = new HashMap<>();
 		for (String variableRoot : roots) {
 			Dependency dep = new Dependency(variableRoot);
-			transMap.put(dep, computeClosure(dep));
+			DependencySet computeClosure = computeClosure(dep);
+			if(!sliceAssertions){
+				computeClosure.addAll(allAssertionDependencies);
+			}
+			transMap.put(dep, computeClosure);
 		}
 		map = transMap;
 	}

@@ -18,9 +18,9 @@ public class Specification {
 	private Relation transitionRelation;
 	private Relation ivcTransitionRelation;
 
-	public Specification(Node raw, List<Function> functions, boolean slicing) {
+	public Specification(Node raw, List<Function> functions, boolean slicing, boolean assertionSlicing) {
 		if (slicing) {
-			this.dependencyMap = new DependencyMap(raw, raw.properties);
+			this.dependencyMap = new DependencyMap(raw, raw.properties, assertionSlicing);
 		} else {
 			this.dependencyMap = DependencyMap.full(raw);
 		}
@@ -30,7 +30,7 @@ public class Specification {
 	}
 	
 	public Specification(Node raw) {
-		this(raw, null, false);
+		this(raw, null, false, false);
 	}
 
 	public List<Function> getFunctions(){

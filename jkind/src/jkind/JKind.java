@@ -27,7 +27,7 @@ public class JKind {
 
 			program = Translate.translate(program);
 			Node main = program.getMainNode();
-			Specification userSpec = new Specification(main, program.functions, settings.slicing);
+			Specification userSpec = new Specification(main, program.functions, settings.slicing, settings.assertion_slicing);
 			Specification analysisSpec = getAnalysisSpec(userSpec, settings);
 
 			int exitCode = new Director(settings, userSpec, analysisSpec).run();
@@ -54,7 +54,7 @@ public class JKind {
 	private static Specification getAnalysisSpec(Specification userSpec, JKindSettings settings) {
 		if (settings.inlining) {
 			Node inlined = InlineSimpleEquations.node(userSpec.node);
-			return new Specification(inlined, userSpec.functions, settings.slicing);
+			return new Specification(inlined, userSpec.functions, settings.slicing, settings.assertion_slicing);
 		} else {
 			return userSpec;
 		}

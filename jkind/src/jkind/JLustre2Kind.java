@@ -28,7 +28,7 @@ public class JLustre2Kind {
 			program = Translate.translate(program);
 			Node main = program.getMainNode();
 			main = RemoveEnumTypes.node(main);
-			DependencyMap dependencyMap = new DependencyMap(main, main.properties);
+			DependencyMap dependencyMap = new DependencyMap(main, main.properties, true);
 			main = LustreSlicer.slice(main, dependencyMap);
 
 			if (settings.encode) {
