@@ -46,4 +46,22 @@ public class Cons extends Sexp {
 		}
 		sb.append(")");
 	}
+	
+	@Override
+	public int hashCode(){
+		return head.hashCode() + args.stream().mapToInt(Sexp::hashCode).sum();
+	}
+	
+	@Override
+	public boolean equals(Object other){
+		if(other == this){
+			return true;
+		}
+		if (other instanceof Cons) {
+			Cons cons = (Cons) other;
+			return cons.head.equals(this.head) && cons.args.equals(this.args);
+		}
+		return false;
+	}
+	
 }

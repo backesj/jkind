@@ -4,7 +4,7 @@ public class TCube implements Comparable<TCube> {
 	public static final int FRAME_NULL = -1;
 	public static final int FRAME_INF = Integer.MAX_VALUE;
 
-	private final Cube cube;
+	private Cube cube;
 	private int frame;
 
 	public TCube(Cube cube, int frame) {
@@ -12,6 +12,10 @@ public class TCube implements Comparable<TCube> {
 		this.frame = frame;
 	}
 
+	public void setCube(Cube cube){
+		this.cube = cube;
+	}
+	
 	public Cube getCube() {
 		return cube;
 	}

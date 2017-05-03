@@ -1,7 +1,6 @@
 package jkind.engines.pdr;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -12,14 +11,14 @@ import jkind.engines.messages.InvalidMessage;
 import jkind.engines.messages.InvariantMessage;
 import jkind.engines.messages.Itinerary;
 import jkind.engines.messages.ValidMessage;
-import jkind.engines.pdr.PdrSmt.Option;
+import jkind.engines.pdr.PdrSmtInterpol.Option;
+import jkind.engines.pdr.z3.PdrZ3;
 import jkind.lustre.Expr;
 import jkind.lustre.Node;
 import jkind.lustre.builders.NodeBuilder;
 import jkind.slicing.LustreSlicer;
 import jkind.solvers.Model;
 import jkind.translation.Specification;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * PDR algorithm based on
@@ -50,7 +49,7 @@ public class PdrSubengine extends Thread {
 		this.parent = parent;
 		this.director = director;
 
-		this.Z = new PdrSmt(node, spec.functions, F, prop, scratchBase);
+		this.Z = new PdrZ3(node, spec.functions, F, prop, scratchBase);
 	}
 
 	public void cancel() {
@@ -62,7 +61,7 @@ public class PdrSubengine extends Thread {
 		Z.comment("Checking property: " + prop);
 
 		// Create F_INF and F[0]
-		F.add(new Frame());
+		F.add(new SmtInterpolFrame());
 		addFrame(Z.createInitialFrame());
 
 		try {
@@ -71,7 +70,7 @@ public class PdrSubengine extends Thread {
 				if (c != null) {
 					blockCube(new TCube(c, depth()));
 				} else {
-					addFrame(new Frame());
+					addFrame(new SmtInterpolFrame());
 					Z.comment("Number of frames: " + F.size());
 					List<Expr> invariants = propogateBlockedCubes();
 					if (invariants != null) {
@@ -154,14 +153,19 @@ public class PdrSubengine extends Thread {
 	}
 
 	private void generalize(TCube s) {
-		List<Term> pLiterals = new ArrayList<>(s.getCube().getPLiterals());
-
-		for (Term p : pLiterals) {
-			s.getCube().removePLiteral(p);
-			if (Z.isInitial(s.getCube()) || Z.solveRelative(s).getFrame() == TCube.FRAME_NULL) {
-				s.getCube().addPLiteral(p);
+		Cube c = s.getCube();
+		
+		for(int i = 0; i < c.size();){
+			Cube origCube = c;
+			c = c.removeLiteral(i);
+			s.setCube(c);
+			if (Z.isInitial(c) || Z.solveRelative(s).getFrame() == TCube.FRAME_NULL) {
+				c = origCube;
+				s.setCube(c);
+				i++;
 			}
 		}
+		s.setCube(c);
 	}
 
 	private int depth() {
