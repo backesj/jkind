@@ -4,9 +4,6 @@ import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.List;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 import jkind.JKindException;
 import jkind.lustre.EnumType;
 import jkind.lustre.Function;
@@ -37,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 public class SmtInterpolUtil {
 	public static Script getScript(String scratchBase) {
-		Logger logger = Logger.getRootLogger();
-		logger.setLevel(Level.OFF);
+		//Logger logger = Logger.getRootLogger();
+		//logger.setLevel(Level.OFF);
 
 		Script baseScript = new SMTInterpol();// SMTInterpol(logger);
 		if (scratchBase == null) {
