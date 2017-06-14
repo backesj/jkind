@@ -11,10 +11,13 @@ import jkind.interval.BoolInterval;
 import jkind.interval.NumericInterval;
 import jkind.lustre.Expr;
 import jkind.lustre.Type;
+import jkind.lustre.VarDecl;
 import jkind.lustre.values.BooleanValue;
 import jkind.lustre.values.Value;
 import jkind.results.Counterexample;
 import jkind.results.Signal;
+import jkind.util.FunctionTable;
+import jkind.util.FunctionTableRow;
 import jkind.util.Util;
 
 public class XmlWriter extends Writer {
@@ -114,7 +117,35 @@ public class XmlWriter extends Writer {
 		for (Signal<Value> signal : cex.getSignals()) {
 			writeSignal(cex.getLength(), signal);
 		}
+		for (FunctionTable fn : cex.getFunctionTables()) {
+			writeFunction(fn);
+		}
 		out.println("    </Counterexample>");
+	}
+
+	private void writeFunction(FunctionTable table) {
+		out.println("      <Function name=\"" + table.funcName + "\">");
+		for (VarDecl input : table.inputs) {
+			out.println("        <Input name=\"" + input.id + "\" type=\"" + input.type + "\"/>");
+		}
+		for (VarDecl output : table.outputs) {
+			out.println("        <Output name=\"" + output.id + "\" type=\"" + output.type + "\"/>");
+		}
+		for (FunctionTableRow row: table.rows) {
+		//Map<List<Value>, List<Value>> map = table.getMap();
+		//for (List<Value> inputs : map.keySet()) {
+			out.println("        <FunctionValue>");
+			for (Value input : row.getInputs()) {
+				String formatted = !Util.isArbitrary(input) ? formatValue(input) : "";
+				out.println("          <ArgumentValue>" + formatted + "</ArgumentValue>");
+			}
+			for (Value output : row.getOutputs()) {
+				String formatted = !Util.isArbitrary(output) ? formatValue(output) : "";
+				out.println("          <ArgumentValue>" + formatted + "</ArgumentValue>");
+			}
+			out.println("        </FunctionValue>");
+		}
+		out.println("      </Function>");
 	}
 
 	private void writeSignal(int k, Signal<Value> signal) {
