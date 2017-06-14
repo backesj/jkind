@@ -124,14 +124,14 @@ public class XmlWriter extends Writer {
 	}
 
 	private void writeFunction(FunctionTable table) {
-		out.println("      <Function name=\"" + table.funcName + "\">");
-		for (VarDecl input : table.inputs) {
+		out.println("      <Function name=\"" + table.getName() + "\">");
+		for (VarDecl input : table.getInputs()) {
 			out.println("        <Input name=\"" + input.id + "\" type=\"" + input.type + "\"/>");
 		}
-		for (VarDecl output : table.outputs) {
+		for (VarDecl output : table.getOutputs()) {
 			out.println("        <Output name=\"" + output.id + "\" type=\"" + output.type + "\"/>");
 		}
-		for (FunctionTableRow row: table.rows) {
+		for (FunctionTableRow row: table.getRows()) {
 		//Map<List<Value>, List<Value>> map = table.getMap();
 		//for (List<Value> inputs : map.keySet()) {
 			out.println("        <FunctionValue>");

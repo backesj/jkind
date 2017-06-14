@@ -10,10 +10,10 @@ import jkind.lustre.VarDecl;
 
 public class FunctionTable {
 
-	public final String funcName;
-	public final Set<FunctionTableRow> rows = new HashSet<>();
-	public final List<VarDecl> inputs;
-	public final List<VarDecl> outputs;
+	private final String funcName;
+	private final Set<FunctionTableRow> rows = new HashSet<>();
+	private final List<VarDecl> inputs;
+	private final List<VarDecl> outputs;
 
 	public FunctionTable(String funcName, List<VarDecl> inputs, List<VarDecl> outputs) {
 		this.funcName = funcName;
@@ -25,6 +25,22 @@ public class FunctionTable {
 		rows.add(row);
 	}
 
+	public List<VarDecl> getInputs() {
+		return inputs;
+	}
+	
+	public List<VarDecl> getOutputs() {
+		return outputs;
+	}
+	
+	public Set<FunctionTableRow> getRows() {
+		return rows;
+	}
+	
+	public String getName() {
+		return funcName;
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
