@@ -125,23 +125,20 @@ public class XmlWriter extends Writer {
 
 	private void writeFunction(FunctionTable table) {
 		out.println("      <Function name=\"" + table.getName() + "\">");
-		for (VarDecl input : table.getInputs()) {
+		List<VarDecl> inputs = table.getInputs();
+		for (VarDecl input : inputs) {
 			out.println("        <Input name=\"" + input.id + "\" type=\"" + input.type + "\"/>");
 		}
-		for (VarDecl output : table.getOutputs()) {
-			out.println("        <Output name=\"" + output.id + "\" type=\"" + output.type + "\"/>");
-		}
+		VarDecl output = table.getOutput();
+		out.println("        <Output name=\"" + output.id + "\" type=\"" + output.type + "\"/>");
 		for (FunctionTableRow row: table.getRows()) {
-		//Map<List<Value>, List<Value>> map = table.getMap();
-		//for (List<Value> inputs : map.keySet()) {
-			out.println("        <FunctionValue>");
+			String formatted = !Util.isArbitrary(row.getOutput()) ? formatValue(row.getOutput()) : "";
+			out.println("        <FunctionValue value=\"" + formatted + "\">");
+			int index = 0;
 			for (Value input : row.getInputs()) {
-				String formatted = !Util.isArbitrary(input) ? formatValue(input) : "";
-				out.println("          <ArgumentValue>" + formatted + "</ArgumentValue>");
-			}
-			for (Value output : row.getOutputs()) {
-				String formatted = !Util.isArbitrary(output) ? formatValue(output) : "";
-				out.println("          <ArgumentValue>" + formatted + "</ArgumentValue>");
+				formatted = !Util.isArbitrary(input) ? formatValue(input) : "";
+				out.println("          <ArgumentValue name=\""+inputs.get(index).id+"\" value=\""+formatted+"\"/>");
+				index++;
 			}
 			out.println("        </FunctionValue>");
 		}

@@ -13,12 +13,12 @@ public class FunctionTable {
 	private final String funcName;
 	private final Set<FunctionTableRow> rows = new HashSet<>();
 	private final List<VarDecl> inputs;
-	private final List<VarDecl> outputs;
+	private final VarDecl output;
 
-	public FunctionTable(String funcName, List<VarDecl> inputs, List<VarDecl> outputs) {
+	public FunctionTable(String funcName, List<VarDecl> inputs, VarDecl output) {
 		this.funcName = funcName;
 		this.inputs = inputs;
-		this.outputs = outputs;
+		this.output = output;
 	}
 
 	public void addRow(FunctionTableRow row) {
@@ -29,8 +29,8 @@ public class FunctionTable {
 		return inputs;
 	}
 	
-	public List<VarDecl> getOutputs() {
-		return outputs;
+	public VarDecl getOutput() {
+		return output;
 	}
 	
 	public Set<FunctionTableRow> getRows() {

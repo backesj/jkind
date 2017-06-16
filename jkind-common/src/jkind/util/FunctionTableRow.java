@@ -8,19 +8,19 @@ import jkind.util.Util;
 public class FunctionTableRow {
 
 	private final List<Value> inputs;
-	private final List<Value> outputs;
+	private final Value output;
 
-	public FunctionTableRow(List<Value> inputs, List<Value> outputs) {
+	public FunctionTableRow(List<Value> inputs, Value output) {
 		this.inputs = Util.safeList(inputs);
-		this.outputs = outputs;
+		this.output = output;
 	}
 
 	public List<Value> getInputs() {
 		return inputs;
 	}
 
-	public List<Value> getOutputs() {
-		return outputs;
+	public Value getOutput() {
+		return output;
 	}
 
 	@Override
@@ -43,10 +43,8 @@ public class FunctionTableRow {
 		for(Value val : inputs){
 			sb.append(String.format("%-10s", val.toString() + " "));
 		}
-		sb.append("|");
-		for(Value val: outputs) {
-			sb.append(" " + String.format("%-10s", val.toString()));
-		}
+		sb.append("| ");	
+		sb.append(String.format("%-10s", output.toString()));
 		return sb.toString();
 	}
 

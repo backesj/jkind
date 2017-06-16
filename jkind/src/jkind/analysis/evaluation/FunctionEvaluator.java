@@ -105,23 +105,20 @@ public abstract class FunctionEvaluator extends Evaluator {
 		return super.visit(e);
 	}
 
-	protected void addFuncRow(String funcName, List<Value> inputVals, List<Value> outputVals) {
+	protected void addFuncRow(String funcName, List<Value> inputVals, Value outputVal) {
 		FunctionTable table = funcTables.get(funcName);
 
 		if (table == null) {
 			Function func = lustreFuncDefs.get(funcName);
-			table = new FunctionTable(funcName.replace(FlattenFunctionsWithRecords.functionRecordDelimeter, "."),func.inputs,func.outputs);
+			if (func.outputs.size() != 1) {
+				throw new IllegalArgumentException();
+			}
+			table = new FunctionTable(funcName.replace(FlattenFunctionsWithRecords.functionRecordDelimeter, "."),func.inputs,func.outputs.get(0));
 			funcTables.put(funcName, table);
 		}
 
-		FunctionTableRow row = new FunctionTableRow(inputVals, outputVals);
+		FunctionTableRow row = new FunctionTableRow(inputVals, outputVal);
 		table.addRow(row);
-	}
-	
-	protected void addFuncRow(String funcName, List<Value> inputVals, Value outputVal) {
-		List<Value> outputVals = new ArrayList<>();
-		outputVals.add(outputVal);
-		addFuncRow(funcName,inputVals,outputVals);
 	}
 
 }
