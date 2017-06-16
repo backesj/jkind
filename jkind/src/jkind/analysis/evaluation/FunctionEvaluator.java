@@ -110,9 +110,10 @@ public abstract class FunctionEvaluator extends Evaluator {
 
 		if (table == null) {
 			Function func = lustreFuncDefs.get(funcName);
-			List<String> inputs = func.inputs.stream().map(v -> v.id).collect(Collectors.toList());
-			table = new FunctionTable(funcName.replace(FlattenFunctionsWithRecords.functionRecordDelimeter, "."),
-					inputs);
+			if (func.outputs.size() != 1) {
+				throw new IllegalArgumentException();
+			}
+			table = new FunctionTable(funcName.replace(FlattenFunctionsWithRecords.functionRecordDelimeter, "."),func.inputs,func.outputs.get(0));
 			funcTables.put(funcName, table);
 		}
 

@@ -43,7 +43,7 @@ public class FunctionTableRow {
 		for(Value val : inputs){
 			sb.append(String.format("%-10s", val.toString() + " "));
 		}
-		sb.append("| ");
+		sb.append("| ");	
 		sb.append(String.format("%-10s", output.toString()));
 		return sb.toString();
 	}
