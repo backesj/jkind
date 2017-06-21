@@ -109,7 +109,7 @@ public class Z3Solver extends SmtLib2Solver implements MaxSatSolver {
 		return unsatCore;
 	}
 
-	private String readCore() {
+	protected String readCore() {
 		String line = "";
 		try {
 			line = fromSolver.readLine();

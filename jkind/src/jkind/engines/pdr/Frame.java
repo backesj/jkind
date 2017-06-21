@@ -3,8 +3,6 @@ package jkind.engines.pdr;
 import java.util.HashSet;
 import java.util.Set;
 
-import jkind.sexp.Sexp;
-
 public abstract class Frame {
 	protected final Set<Cube> cubes = new HashSet<>();
 
@@ -24,5 +22,4 @@ public abstract class Frame {
 	public String toString() {
 			return cubes.toString();
 	}
-	
 }
