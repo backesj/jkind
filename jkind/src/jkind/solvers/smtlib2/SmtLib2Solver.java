@@ -225,6 +225,6 @@ public abstract class SmtLib2Solver extends ProcessBasedSolver {
 		for (VarDecl var : function.inputs) {
 			args.add(type(var.type));
 		}
-		send(new Cons("declare-fun", new StreamIndex(function.id, 0).getFunctionEncoded(), new Cons(args), type(function.outputs.get(0).type)));
+		send(new Cons("declare-fun", new StreamIndex(function.id, 0).getFunctionEncoded(), args.size() > 0 ? new Cons(args) : new Symbol("()"), type(function.outputs.get(0).type)));
 	}
 }

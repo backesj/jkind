@@ -142,10 +142,14 @@ public class Lustre2Sexp implements ExprVisitor<Sexp> {
 	@Override
 	public Sexp visit(FunctionCallExpr e){
 		List<Sexp> argList = new ArrayList<>();
-		for(Expr expr : e.args){
+		for (Expr expr : e.args) {
 			argList.add(expr.accept(this));
 		}
-		return new Cons(new StreamIndex(e.function, index).getFunctionEncoded(), argList);
+		if (argList.size() > 0) {
+			return new Cons(new StreamIndex(e.function, index).getFunctionEncoded(), argList);
+		} else {
+			return new StreamIndex(e.function, index).getFunctionEncoded();
+		}
 	}
 	
 	@Override
