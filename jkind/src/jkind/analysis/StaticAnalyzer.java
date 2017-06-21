@@ -64,17 +64,23 @@ public class StaticAnalyzer {
 	}
 
 	private static boolean checkFunctions(Program program) {
+		boolean retVal = true;
 		for(Function func : program.functions){
 			if(func.outputs.size() != 1){
 				if(func.outputs.size() == 0){
 					StdErr.error(func.location, "Functions must have an output variable");
-					return false;
+					retVal = false;
 				}
 				StdErr.error(func.outputs.get(1).location, "JKind currently only supports functions with a single outputs");;
-				return false;
+				retVal = false;
 			}
+			if(func.inputs.size() < 1){
+				StdErr.error(func.location, "Functions must contain at least one argument");
+				retVal = false;
+			}
+			
 		}
-		return true;
+		return retVal;
 	}
 
 	private static void checkSolverLimitations(Program program, SolverOption solver) {
