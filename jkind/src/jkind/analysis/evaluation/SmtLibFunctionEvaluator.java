@@ -89,18 +89,22 @@ public class SmtLibFunctionEvaluator extends FunctionEvaluator {
 		if (funcSexp instanceof Cons) {
 			Cons body = (Cons) funcSexp;
 			// the first part of the cons contains the args
-			Cons argsExpr = (Cons) body.head;
+			if (body.head instanceof Cons) {
+				Cons argsExpr = (Cons) body.head;
 
-			for (int i = 0; i < inputValues.size(); i++) {
-				Cons argExpr;
-				if (i == 0) {
-					argExpr = (Cons) argsExpr.head;
-				} else {
-					argExpr = (Cons) argsExpr.args.get(i - 1);
+				for (int i = 0; i < inputValues.size(); i++) {
+					Cons argExpr;
+					if (i == 0) {
+						argExpr = (Cons) argsExpr.head;
+					} else {
+						argExpr = (Cons) argsExpr.args.get(i - 1);
+					}
+					evalulationModel.putValue(argExpr.head.toString(), inputValues.get(i));
 				}
-				evalulationModel.putValue(argExpr.head.toString(), inputValues.get(i));
+				funcSym = body.args.get(0);
+			} else {
+				funcSym = funcSexp;
 			}
-			funcSym = body.args.get(0);
 		}else{
 			funcSym = funcSexp;
 		}
