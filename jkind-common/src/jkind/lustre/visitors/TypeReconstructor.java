@@ -209,10 +209,26 @@ public class TypeReconstructor implements ExprVisitor<Type> {
 
 	@Override
 	public Type visit(NodeCallExpr e) {
-		Node node = nodeTable.get(e.node);
 		List<Type> outputs = new ArrayList<>();
-		for (VarDecl output : node.outputs) {
-			outputs.add(resolveType(output.type));
+		Node node = nodeTable.get(e.node);
+		// At this point in parsing, function calls haven't been converted from
+		// NodeCallExprs. In certain cases, such as a function call returning an
+		// array with an accessor, the function call will make its way here as
+		// a NodeCallExpr.
+		//
+		// If we don't find an entry in the node table, we check to see if there's
+		// an entry in the function table.
+		if (node != null) {
+			for (VarDecl output : node.outputs) {
+				outputs.add(resolveType(output.type));
+			}
+		} else {
+			Function func = funcTable.get(e.node);
+			if (func != null) {
+				for (VarDecl output : func.outputs) {
+					outputs.add(resolveType(output.type));
+				}
+			}
 		}
 		return TupleType.compress(outputs);
 	}
