@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
+import jkind.StdErr;
 import jkind.lustre.Equation;
 import jkind.lustre.Expr;
 import jkind.lustre.Function;
@@ -17,14 +17,12 @@ import jkind.lustre.Node;
 import jkind.lustre.values.FunctionValue;
 import jkind.lustre.values.Value;
 import jkind.lustre.visitors.ExprIterVisitor;
-import jkind.lustre.visitors.ExprMapVisitor;
 import jkind.sexp.Cons;
 import jkind.sexp.Sexp;
 import jkind.solvers.Model;
 import jkind.solvers.ModelEvaluator;
 import jkind.solvers.SimpleModel;
 import jkind.solvers.smtlib2.SexpEvaluator;
-import jkind.util.FunctionTable;
 import jkind.util.StreamIndex;
 
 public class SmtLibFunctionEvaluator extends FunctionEvaluator {
@@ -58,9 +56,12 @@ public class SmtLibFunctionEvaluator extends FunctionEvaluator {
 		}
 
 		for (String name : names) {
-			Value val = normalModel.getValue(new StreamIndex(name, 0).getFunctionEncoded().str);
+			Value val = normalModel.getValue(new StreamIndex(name, 0).getFunctionEncoded().str);			
 			if(val != null){ //if null then the cex did not report a model for the function
-				bodies.put(name, ((FunctionValue) val).getBody());
+				if (val instanceof FunctionValue)
+					bodies.put(name, ((FunctionValue) val).getBody());
+				else
+					throw new RuntimeException("Non-function type added to model for " + name);
 			}
 		}
 

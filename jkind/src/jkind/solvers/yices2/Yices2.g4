@@ -12,7 +12,7 @@ functionType: '(' 'type' '(' '->' type* ')' ')';
 
 type: 'int' | 'real' | 'bool';
 
-functionValue: '(' '=' '(' ID integer ')' value ')';
+functionValue: '(' '=' '(' ID numeric+ ')' value ')';
 
 defaultValue: '(' 'default' value ')';
 
