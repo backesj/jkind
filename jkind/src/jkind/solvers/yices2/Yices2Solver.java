@@ -3,10 +3,14 @@ package jkind.solvers.yices2;
 import java.util.List;
 
 import jkind.JKindException;
-import jkind.lustre.Node;
+import jkind.sexp.Cons;
+import jkind.sexp.Sexp;
 import jkind.sexp.Symbol;
 import jkind.solvers.Model;
+import jkind.solvers.Result;
+import jkind.solvers.SatResult;
 import jkind.solvers.SolverParserErrorListener;
+import jkind.solvers.UnsatResult;
 import jkind.solvers.smtlib2.SmtLib2Solver;
 import jkind.solvers.yices2.Yices2Parser.ModelContext;
 
@@ -38,7 +42,7 @@ public class Yices2Solver extends SmtLib2Solver {
 	@Override
 	public void initialize() {
 		send("(set-option :produce-models true)");
-		send("(set-logic QF_LIRA)");
+		send("(set-logic QF_UFLIRA)");
 	}
 
 	@Override
@@ -47,6 +51,26 @@ public class Yices2Solver extends SmtLib2Solver {
 		return activationLiterals;
 	}
 
+	@Override
+	public Result query(Sexp sexp) {
+		Result result = null;
+		push();
+
+		assertSexp(new Cons("not", sexp));
+		send("(check-sat)");
+		String status = readFromSolver();
+		if (isSat(status)) {
+			send("(get-model)");
+			result = new SatResult(parseYices2Model(readFromSolver()));
+		} else if (isUnsat(status)) {
+			result = new UnsatResult();
+		} else {
+			throw new IllegalArgumentException("Unknown result: " + result);
+		}
+
+		pop();
+		return result;
+	}
 	
 	protected Model parseYices2Model(String string) {
 		CharStream stream = new ANTLRInputStream(string);

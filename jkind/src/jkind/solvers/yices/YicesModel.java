@@ -6,8 +6,11 @@ import java.util.Map;
 import java.util.Set;
 
 import jkind.lustre.Type;
+import jkind.lustre.values.FunctionValue;
 import jkind.lustre.values.Value;
+import jkind.sexp.Symbol;
 import jkind.solvers.Model;
+import jkind.util.StreamIndex;
 import jkind.util.Util;
 
 public class YicesModel extends Model {
@@ -36,7 +39,8 @@ public class YicesModel extends Model {
 
 	@Override
 	public Value getValue(String name) {
-		Value value = values.get(getAlias(name));
+		String alias = getAlias(name);
+		Value value = values.get(alias);
 		if (value == null) {
 			Type type = varTypes.get(name);
 			if(type == null){
@@ -44,6 +48,9 @@ public class YicesModel extends Model {
 			}
 			return Util.getDefaultValue(type);
 		} else {
+			if (StreamIndex.isFunctionEncoded(alias) && ! (value instanceof FunctionValue) ) {
+				return new FunctionValue(name, new Symbol(value.toString()));
+			}
 			return value;
 		}
 	}
