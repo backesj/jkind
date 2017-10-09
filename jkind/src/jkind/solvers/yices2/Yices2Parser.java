@@ -633,11 +633,11 @@ public class Yices2Parser extends Parser {
 	}
 
 	public static class QuotientContext extends ParserRuleContext {
-		public List<IntegerContext> integer() {
-			return getRuleContexts(IntegerContext.class);
+		public List<NumericContext> numeric() {
+			return getRuleContexts(NumericContext.class);
 		}
-		public IntegerContext integer(int i) {
-			return getRuleContext(IntegerContext.class,i);
+		public NumericContext numeric(int i) {
+			return getRuleContext(NumericContext.class,i);
 		}
 		public QuotientContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -661,8 +661,8 @@ public class Yices2Parser extends Parser {
 			{
 			setState(104); match(T__5);
 			setState(105); match(T__11);
-			setState(106); integer();
-			setState(107); integer();
+			setState(106); numeric();
+			setState(107); numeric();
 			setState(108); match(T__4);
 			}
 		}
@@ -776,8 +776,8 @@ public class Yices2Parser extends Parser {
 		"\2Y\17\3\2\2\2Z[\7\t\2\2[\\\7\4\2\2\\]\5\22\n\2]^\7\n\2\2^\21\3\2\2\2"+
 		"_b\7\17\2\2`b\5\30\r\2a_\3\2\2\2a`\3\2\2\2b\23\3\2\2\2ci\7\20\2\2de\7"+
 		"\t\2\2ef\7\13\2\2fg\7\20\2\2gi\7\n\2\2hc\3\2\2\2hd\3\2\2\2i\25\3\2\2\2"+
-		"jk\7\t\2\2kl\7\3\2\2lm\5\24\13\2mn\5\24\13\2no\7\n\2\2o\27\3\2\2\2ps\5"+
-		"\24\13\2qs\5\26\f\2rp\3\2\2\2rq\3\2\2\2s\31\3\2\2\2\13\35\37\66:ETahr";
+		"jk\7\t\2\2kl\7\3\2\2lm\5\30\r\2mn\5\30\r\2no\7\n\2\2o\27\3\2\2\2ps\5\24"+
+		"\13\2qs\5\26\f\2rp\3\2\2\2rq\3\2\2\2s\31\3\2\2\2\13\35\37\66:ETahr";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

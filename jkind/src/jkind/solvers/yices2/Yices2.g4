@@ -24,7 +24,7 @@ integer: INT                 # positiveInteger
        | '(' '-' INT ')'     # negativeInteger
        ;
        
-quotient: '(' '/' integer integer ')';
+quotient: '(' '/' numeric numeric ')';
          
 numeric: integer             # integerNumeric
        | quotient            # quotientNumeric
