@@ -4,12 +4,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import jkind.ArgumentParser;
 import jkind.lustre.Type;
 import jkind.lustre.values.BooleanValue;
 import jkind.lustre.values.FunctionValue;
@@ -81,19 +78,6 @@ public class ModelExtractorListener extends Yices2BaseListener {
 			throw new RuntimeException("Unknown integer context");
 	}
 
-	private Sexp numericToSexp(NumericContext ctx) {
-		if (ctx instanceof IntegerNumericContext) {
-			IntegerNumericContext ictx = (IntegerNumericContext) ctx;
-			return sexpInteger(ictx.integer());
-		} else if (ctx instanceof QuotientNumericContext) {
-			QuotientNumericContext qctx = (QuotientNumericContext) ctx;
-			return new Symbol(numericToSexp(qctx.quotient().numeric(0)).toString()
-					+ "/" + numericToSexp(qctx.quotient().numeric(1)).toString());
-		} else {
-			throw new IllegalArgumentException();
-		}
-	}
-	
 	private BigFraction quotient(QuotientContext ctx) {
 		IntegerNumericContext num = (IntegerNumericContext)ctx.numeric(0);
 		IntegerNumericContext den = (IntegerNumericContext)ctx.numeric(1);
@@ -112,6 +96,19 @@ public class ModelExtractorListener extends Yices2BaseListener {
 		}
 	}
 
+	private Sexp numericToSexp(NumericContext ctx) {
+		if (ctx instanceof IntegerNumericContext) {
+			IntegerNumericContext ictx = (IntegerNumericContext) ctx;
+			return sexpInteger(ictx.integer());
+		} else if (ctx instanceof QuotientNumericContext) {
+			QuotientNumericContext qctx = (QuotientNumericContext) ctx;
+			return new Symbol(numericToSexp(qctx.quotient().numeric(0)).toString()
+					+ "/" + numericToSexp(qctx.quotient().numeric(1)).toString());
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
 	private static Sexp fnValsToITE(List<Sexp> inputVals, Sexp outputVal, Sexp elseExpr) {
 		Sexp ands = null;
 		int i = 0;
@@ -158,7 +155,6 @@ public class ModelExtractorListener extends Yices2BaseListener {
 			}
 			//NumericContext
 			Sexp output = new Symbol(value(fctx.value()).toString());
-			//Sexp output = new Symbol(fctx.value().getText());
 			if (body == null)
 				body = output;
 			body = fnValsToITE(inputs, output, body);
