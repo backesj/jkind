@@ -225,7 +225,7 @@ public class JKindArgumentParser extends ArgumentParser {
 	}
 
 	private void printDectectedSolvers() {
-		String detected = SolverUtil.availableSolvers().stream().map(Object::toString)
+		String detected = SolverUtil.availableSolvers(false).stream().map(Object::toString)
 				.collect(joining(", "));
 		StdErr.println("Detected solvers: " + detected);
 	}

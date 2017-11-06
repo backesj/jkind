@@ -20,10 +20,10 @@ import jkind.solvers.yices2.Yices2Solver;
 import jkind.solvers.z3.Z3Solver;
 
 public class SolverUtil {
-	public static Solver getSolver(SolverOption solverOption, String scratchBase, Node node, List<Function> functions) {
+	public static Solver getSolver(SolverOption solverOption, String scratchBase, Node node, boolean UFsupport) {
 		switch (solverOption) {
 		case YICES:
-			boolean arithOnly = YicesArithOnlyCheck.check(node) && functions.size() == 0;
+			boolean arithOnly = YicesArithOnlyCheck.check(node) && !UFsupport;
 			return new YicesSolver(scratchBase, arithOnly);
 		case CVC4:
 			return new Cvc4Solver(scratchBase);
@@ -39,18 +39,21 @@ public class SolverUtil {
 		throw new IllegalArgumentException("Unknown solver: " + solverOption);
 	}
 
-	public static boolean solverIsAvailable(SolverOption solverOption) {
+	public static boolean solverIsAvailable(SolverOption solverOption, boolean UFsupport) {
 		try {
 			Node emptyNode = new NodeBuilder("empty").build();
-			getSolver(solverOption, null, emptyNode, null);
+			getSolver(solverOption, null, emptyNode, UFsupport);
 		} catch (JKindException e) {
 			return false;
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			throw e;
 		}
 		return true;
 	}
 
-	public static List<SolverOption> availableSolvers() {
-		return Arrays.stream(SolverOption.values()).filter(x -> solverIsAvailable(x))
+	public static List<SolverOption> availableSolvers(boolean UFsupport) {
+		return Arrays.stream(SolverOption.values()).filter(x -> solverIsAvailable(x,UFsupport))
 				.collect(Collectors.toList());
 	}
 
