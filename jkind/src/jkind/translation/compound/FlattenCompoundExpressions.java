@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import jkind.lustre.ArrayAccessExpr;
 import jkind.lustre.ArrayExpr;
+import jkind.lustre.ArrayType;
 import jkind.lustre.Expr;
 import jkind.lustre.Function;
 import jkind.lustre.FunctionCallExpr;
@@ -20,7 +21,7 @@ import jkind.lustre.RecordExpr;
 import jkind.lustre.RecordType;
 import jkind.lustre.builders.ProgramBuilder;
 import jkind.lustre.visitors.AstMapVisitor;
-import jkind.translation.FlattenFunctionsWithRecords;
+import jkind.translation.FlattenFunctionsWithComplexTypes;
 
 /**
  * Flatten array and record expressions to scalars variables
@@ -37,9 +38,10 @@ public class FlattenCompoundExpressions extends AstMapVisitor {
 		Node node = program.getMainNode();
 		node = new FlattenCompoundExpressions().visit(node);
 
-		// remove the redundant functions with RecordType return vals
+		// remove the redundant functions with RecordType or ArrayType return values
 		List<Function> funcs = program.functions;
 		funcs = funcs.stream().filter(f -> !(f.outputs.get(0).type instanceof RecordType)).collect(Collectors.toList());
+		funcs = funcs.stream().filter(f -> !(f.outputs.get(0).type instanceof ArrayType)).collect(Collectors.toList());
 		return new ProgramBuilder(program).clearNodes().clearFunctions().addNode(node).addFunctions(funcs).build();
 	}
 
@@ -102,11 +104,17 @@ public class FlattenCompoundExpressions extends AstMapVisitor {
 			Deque<Access> tempAccesses = new ArrayDeque<>();
 			StringBuilder access = new StringBuilder();
 			while (!accesses.isEmpty()) {
-				tempAccesses.push(accesses.peek());
-				access.append(((RecordAccess) accesses.pop()).toString());
+				Access tmp = accesses.peek();
+				tempAccesses.push(tmp);
+				if (tmp instanceof RecordAccess) {
+					access.append(((RecordAccess) accesses.pop()).toString());
+				} else if (tmp instanceof ArrayAccess) {
+					access.append(((ArrayAccess) accesses.pop()).toString());
+				}
 			}
 			String funcName = e.function
-					+ access.toString().replace(".", FlattenFunctionsWithRecords.functionRecordDelimeter);
+					+ access.toString().replace(".", FlattenFunctionsWithComplexTypes.functionRecordDelimeter)
+						.replaceAll("\\[([^]]+)\\]", FlattenFunctionsWithComplexTypes.functionArrayDelimeter + "$1");
 			Expr result = new FunctionCallExpr(funcName, visitExprs(e.args));
 			while (!tempAccesses.isEmpty()) {
 				accesses.push(tempAccesses.pop());

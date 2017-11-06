@@ -30,9 +30,6 @@ public class SolverUtil {
 		case Z3:
 			return new Z3Solver(scratchBase, LinearChecker.isLinear(node));
 		case YICES2:
-			if (UFsupport) {
-				throw new JKindException("We do not support uninterpreted functions with yices2");
-			}
 			return new Yices2Solver(scratchBase);
 		case MATHSAT:
 			return new MathSatSolver(scratchBase);

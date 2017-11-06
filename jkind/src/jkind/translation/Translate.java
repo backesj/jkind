@@ -1,8 +1,6 @@
 package jkind.translation;
 
-import jkind.lustre.Node;
 import jkind.lustre.Program;
-import jkind.lustre.builders.ProgramBuilder;
 import jkind.translation.compound.FlattenCompoundTypes;
 import jkind.translation.tuples.FlattenTuples;
 
@@ -13,7 +11,7 @@ public class Translate {
 		program = InlineUserTypes.program(program);
 		program = InlineConstants.program(program);
 		program = RemoveCondacts.program(program);
-		program = FlattenFunctionsWithRecords.program(program);
+		program = FlattenFunctionsWithComplexTypes.program(program);
 		program = InlineNodeCalls.program(program);
 		program = FlattenTuples.program(program);
 		program = FlattenCompoundTypes.program(program);

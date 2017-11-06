@@ -27,7 +27,7 @@ import jkind.lustre.values.IntegerValue;
 import jkind.lustre.values.RealValue;
 import jkind.lustre.values.Value;
 import jkind.solvers.smtinterpol.SmtInterpolUtil;
-import jkind.translation.FlattenFunctionsWithRecords;
+import jkind.translation.FlattenFunctionsWithComplexTypes;
 import jkind.util.FunctionTable;
 import jkind.util.FunctionTableRow;
 import jkind.util.StreamIndex;
@@ -113,7 +113,11 @@ public abstract class FunctionEvaluator extends Evaluator {
 			if (func.outputs.size() != 1) {
 				throw new IllegalArgumentException();
 			}
-			table = new FunctionTable(funcName.replace(FlattenFunctionsWithRecords.functionRecordDelimeter, "."),func.inputs,func.outputs.get(0));
+			table = new FunctionTable(
+					funcName.replace(FlattenFunctionsWithComplexTypes.functionRecordDelimeter, ".")
+						.replaceAll(FlattenFunctionsWithComplexTypes.functionArrayDelimeter + "([0-9]+)", "[$1]")
+						.replaceAll(FlattenFunctionsWithComplexTypes.functionTupleDelimeter + "(.*)", "($1)"),
+					func.inputs,func.outputs.get(0));
 			funcTables.put(funcName, table);
 		}
 
